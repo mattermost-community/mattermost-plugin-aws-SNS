@@ -1,4 +1,4 @@
-# AWS SNS Plugin
+# AWS SNS Plugin [![CircleCI](https://circleci.com/gh/cpanato/mattermost-plugin-aws-SNS.svg?style=svg)](https://circleci.com/gh/cpanato/mattermost-plugin-aws-SNS)
 
 This plugin receives SNS notification from Alerts created by AWS Cloudwatch and sent via AWS SNS.
 

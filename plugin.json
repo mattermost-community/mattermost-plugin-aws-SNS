@@ -1,0 +1,41 @@
+{
+    "id": "com.cpanato.aws-sns",
+    "name": "AWS SNS",
+    "description": "This plugin receives SNS notification from Alerts created by AWS Cloudwatch and sent via AWS SNS.",
+    "version": "0.0.1",
+    "server": {
+        "executables": {
+            "linux-amd64": "server/dist/plugin-linux-amd64",
+            "darwin-amd64": "server/dist/plugin-darwin-amd64",
+            "windows-amd64": "server/dist/plugin-windows-amd64.exe"
+        }
+    },
+    "settings_schema": {
+        "header": "",
+        "footer": "",
+        "settings": [{
+            "key": "TeamChannel",
+            "display_name": "Team/Channel",
+            "type": "text",
+            "help_text": "Name of the Team and Channel you want to create/use to receive the SNS messages. Split by comma. ie. teamA,channelXYZ"
+        },
+        {
+            "key": "AllowedUserIds",
+            "display_name": "AllowedUserIds",
+            "type": "text",
+            "help_text": "Users ID authorized to accept the subscription."
+        },
+        {
+            "key": "Username",
+            "display_name": "User",
+            "type": "username",
+            "help_text": "Select the username that this integration is attached to."
+        },
+        {
+            "key": "Token",
+            "display_name": "Token",
+            "type": "generated",
+            "help_text": "Generated token to validate the incoming request from AWS SNS."
+        }]
+    }
+}

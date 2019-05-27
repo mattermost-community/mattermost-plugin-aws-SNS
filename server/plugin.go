@@ -220,7 +220,7 @@ func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
 
 func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionURL string) {
 	config := p.API.GetConfig()
-	siteURLPort := *config.ServiceSettings.ListenAddress
+	siteURLPort := *config.ServiceSettings.SiteURL
 	action1 := &model.PostAction{
 		Name: "Confirm Subscription",
 		Type: model.POST_ACTION_TYPE_BUTTON,
@@ -229,7 +229,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 				"action":           "confirm",
 				"subscription_url": subscriptionURL,
 			},
-			URL: fmt.Sprintf("http://localhost%v/plugins/%v/confirm?token=%v", siteURLPort, manifest.Id, p.configuration.Token),
+			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v", siteURLPort, manifest.Id, p.configuration.Token),
 		},
 	}
 

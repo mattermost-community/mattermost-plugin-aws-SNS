@@ -3,7 +3,6 @@ executors:
   default:
     docker:
       - image: circleci/golang:1.12
-    working_directory: /go/src/github.com/cpanato/mattermost-plugin-aws-sns
 
 jobs:
   lint:

@@ -368,6 +368,6 @@ func addFields(fields []*model.SlackAttachmentField, title, msg string, short bo
 	return append(fields, &model.SlackAttachmentField{
 		Title: title,
 		Value: msg,
-		Short: short,
+		Short: model.SlackCompatibleBool(short),
 	})
 }

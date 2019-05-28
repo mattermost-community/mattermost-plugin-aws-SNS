@@ -1,4 +1,4 @@
-module github.com/cpanato/mattermost-plugin-aws-SNS
+module github.com/mattermost/mattermost-plugin-aws-SNS
 
 go 1.12
 

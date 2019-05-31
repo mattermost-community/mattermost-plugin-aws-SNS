@@ -2,6 +2,8 @@
 
 This plugin receives SNS notification from Alerts created by AWS Cloudwatch and sent via AWS SNS.
 
+Originally developed by [Carlos Tadeu Panato Junior](https://github.com/cpanato/).
+
 ## Configuration
 
 ### Mattermost side:

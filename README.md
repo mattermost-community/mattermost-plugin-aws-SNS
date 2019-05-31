@@ -1,4 +1,4 @@
-# AWS SNS Plugin [![CircleCI](https://circleci.com/gh/cpanato/mattermost-plugin-aws-SNS.svg?style=svg)](https://circleci.com/gh/cpanato/mattermost-plugin-aws-SNS)
+# AWS SNS Plugin [![CircleCI](https://circleci.com/gh/mattermost/mattermost-plugin-aws-SNS.svg?style=svg)](https://circleci.com/gh/mattermost/mattermost-plugin-aws-SNS)
 
 This plugin receives SNS notification from Alerts created by AWS Cloudwatch and sent via AWS SNS.
 
@@ -18,7 +18,7 @@ This plugin receives SNS notification from Alerts created by AWS Cloudwatch and 
 
  - Setup your AWS Cloudwatch alarms
  - Create an AWS SNS Topic
- - Create a HTTPS subscription poiting to `https://<YOUR_SITE_URL>/plugins/com.cpanato.aws-sns?token=<TOKEN_GENERATED_IN_MATTERMOST_PLUGIN_CONFIG>`
+ - Create a HTTPS subscription poiting to `https://<YOUR_SITE_URL>/plugins/com.mattermost.aws-sns?token=<TOKEN_GENERATED_IN_MATTERMOST_PLUGIN_CONFIG>`
  - You will receive a message in the channel you setup to confirm the subscription.
  - Configure your Alarms to use the topic you created.
  - Start getting alerts when Cloudwatch trigger.

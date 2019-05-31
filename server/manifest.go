@@ -4,6 +4,6 @@ var manifest = struct {
 	Id      string
 	Version string
 }{
-	Id:      "com.cpanato.aws-sns",
-	Version: "0.1.0",
+	Id:      "com.mattermost.aws-sns",
+	Version: "0.1.1",
 }

@@ -1,7 +1,7 @@
 {
     "id": "com.mattermost.aws-sns",
     "name": "AWS SNS",
-    "description": "This plugin receives SNS notification from Alerts created by AWS Cloudwatch and sent via AWS SNS.",
+    "description": "Send alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS",
     "version": "0.1.1",
     "server": {
         "executables": {
@@ -15,27 +15,27 @@
         "footer": "",
         "settings": [{
             "key": "TeamChannel",
-            "display_name": "Team/Channel",
+            "display_name": "Channel to send notifications to:",
             "type": "text",
-            "help_text": "Name of the Team and Channel you want to create/use to receive the SNS messages. Split by comma. ie. teamA,channelXYZ"
+            "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n\nNote: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel"
         },
         {
             "key": "AllowedUserIds",
-            "display_name": "AllowedUserIds",
+            "display_name": "Authorized users who can accept AWS SNS subscriptions:",
             "type": "text",
-            "help_text": "Users ID authorized to accept the subscription."
+            "help_text": "List of users authorized to accept AWS SNS subscriptions to a Mattermost channel. Must be a comma-separated list of user ID's.\n\nTip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID."
         },
         {
             "key": "Username",
-            "display_name": "User",
+            "display_name": "Username:",
             "type": "username",
             "help_text": "Select the username that this integration is attached to."
         },
         {
             "key": "Token",
-            "display_name": "Token",
+            "display_name": "Token:",
             "type": "generated",
-            "help_text": "Generated token to validate the incoming request from AWS SNS."
+            "help_text": "Generated token to validate incoming requests from AWS SNS."
         }]
     }
 }

@@ -21,7 +21,7 @@
         },
         {
             "key": "AllowedUserIds",
-            "display_name": "Authorized users who can accept AWS SNS subscriptions:",
+            "display_name": "Authorized User IDs:",
             "type": "text",
             "help_text": "List of users authorized to accept AWS SNS subscriptions to a Mattermost channel. Must be a comma-separated list of user ID's.\n\nTip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID."
         },

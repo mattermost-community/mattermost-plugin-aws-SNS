@@ -68,7 +68,7 @@ func (p *Plugin) OnActivate() error {
 		}
 
 		newChannel, errChannel := p.API.CreateChannel(channelToCreate)
-		if err != nil {
+		if errChannel != nil {
 			return errChannel
 		}
 		p.ChannelID = newChannel.Id

@@ -2,7 +2,7 @@
     "id": "com.mattermost.aws-sns",
     "name": "AWS SNS",
     "description": "This plugin receives SNS notification from Alerts created by AWS Cloudwatch and sent via AWS SNS.",
-    "version": "0.1.1",
+    "version": "1.0.0",
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",

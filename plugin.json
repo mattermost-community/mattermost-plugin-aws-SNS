@@ -17,13 +17,13 @@
             "key": "TeamChannel",
             "display_name": "Channel to send notifications to:",
             "type": "text",
-            "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n\nNote: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel"
+            "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n \nNote: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel"
         },
         {
             "key": "AllowedUserIds",
             "display_name": "Authorized User IDs:",
             "type": "text",
-            "help_text": "List of users authorized to accept AWS SNS subscriptions to a Mattermost channel. Must be a comma-separated list of user ID's.\n\nTip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID."
+            "help_text": "List of users authorized to accept AWS SNS subscriptions to a Mattermost channel. Must be a comma-separated list of user ID's.\n \nTip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID."
         },
         {
             "key": "Username",

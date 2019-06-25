@@ -11,7 +11,7 @@
         }
     },
     "settings_schema": {
-        "header": "",
+        "header": "This plugin is used to send alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS",
         "footer": "",
         "settings": [{
             "key": "TeamChannel",

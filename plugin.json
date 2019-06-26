@@ -1,7 +1,7 @@
 {
     "id": "com.mattermost.aws-sns",
     "name": "AWS SNS",
-    "description": "Send alert notifications from Amazon AWS CloudWatch (https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS.",
+    "description": "Send alert notifications from Amazon AWS CloudWatch to Mattermost channels via AWS SNS.",
     "version": "1.0.1",
     "server": {
         "executables": {

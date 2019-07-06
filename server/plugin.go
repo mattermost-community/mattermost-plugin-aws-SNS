@@ -11,6 +11,7 @@ import (
 
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
+	"github.com/pkg/errors"
 )
 
 type Plugin struct {
@@ -41,6 +42,10 @@ func (p *Plugin) OnActivate() error {
 	}
 
 	split := strings.Split(p.configuration.TeamChannel, ",")
+	if len(split) != 2 {
+		return errors.New("teamChannel setting doesn't follow the pattern $TEAM_NAME,$CHANNEL_NAME")
+	}
+
 	teamSplit := split[0]
 	channelSplit := split[1]
 

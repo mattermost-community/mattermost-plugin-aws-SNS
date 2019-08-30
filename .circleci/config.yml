@@ -14,6 +14,10 @@ workflows:
           filters:
             tags:
               only: /^v.*/
+      - plugin-ci/coverage:
+          filters:
+            tags:
+              only: /^v.*/
       - plugin-ci/build:
           filters:
             tags:

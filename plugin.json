@@ -3,6 +3,7 @@
     "name": "AWS SNS",
     "description": "Send alert notifications from Amazon AWS CloudWatch to Mattermost channels via AWS SNS.",
     "version": "1.0.2",
+    "min_server_version": "5.2.0",
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",

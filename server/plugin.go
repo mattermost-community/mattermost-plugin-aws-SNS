@@ -83,6 +83,10 @@ func (p *Plugin) OnActivate() error {
 		p.ChannelID = channel.Id
 	}
 
+	if err := p.registerCommands(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

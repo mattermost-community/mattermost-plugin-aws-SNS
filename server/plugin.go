@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -334,12 +335,71 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 			}
 
 			encodeEphermalMessage(w, "Subscription Confirmed.")
+
+			// Extract the topic from Subscription Confirmation URL
+			query, err := url.ParseQuery(action.Context.SubscriptionURL)
+			if err != nil {
+				p.API.LogError("Unable to parse Subscribe URL from AWS SNS")
+				return
+			}
+			topic := strings.Split(query.Get("TopicArn"), ":")[5]
+			// Store this topic in KV Store
+			if err = p.updateKVStore(topic); err != nil {
+				p.API.LogError("Unable to store AWS SNS Topic in KV Store")
+			}
 			return
 		}
 	default:
 		http.NotFound(w, r)
 		return
 	}
+}
+
+func (p *Plugin) updateKVStore(topic string) error {
+	var topics = Topics{
+		Topics: []string{topic},
+	}
+	val, err := p.API.KVGet(p.ChannelID)
+	if err != nil {
+		p.API.LogError("Unable to Get from KV Store")
+		return err
+	}
+	if val == nil {
+		b, marshalErr := json.Marshal(topics)
+		if marshalErr != nil {
+			p.API.LogError("Unable to marshal Topics struct to JSON")
+			return marshalErr
+		}
+		p.API.KVSet(p.ChannelID, b)
+		return nil
+	} else {
+		var existingTopics Topics
+		unmarshalErr := json.Unmarshal(val, &existingTopics)
+		if unmarshalErr != nil {
+			p.API.LogError("Unmarshal failed for existing Topics in KV Store")
+			return unmarshalErr
+		}
+		r := isStringInList(topic, existingTopics.Topics)
+		if r == false {
+			existingTopics.Topics = append(existingTopics.Topics, topic)
+			newb, marshalErr := json.Marshal(existingTopics)
+			if marshalErr != nil {
+				p.API.LogError("Unable to marshal New Topics struct to JSON")
+				return marshalErr
+			}
+			p.API.KVSet(p.ChannelID, newb)
+		}
+	}
+	return nil
+}
+
+func isStringInList(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Plugin) checkAllowedUsers(userID string) error {

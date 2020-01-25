@@ -1,5 +1,5 @@
 package main
 
-type Topics struct {
-	Topics []string `json:"topics"`
+type SNSTopics struct {
+	Topics map[string]bool
 }

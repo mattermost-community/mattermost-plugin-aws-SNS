@@ -40,7 +40,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	switch action {
 	case "listTopics":
-		var topics Topics
+		var topics SNSTopics
 		val, err := p.API.KVGet(p.ChannelID)
 		if err != nil {
 			p.API.LogError("Failed to Get from KV Store")
@@ -53,7 +53,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			return &model.CommandResponse{
 				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 				Text: fmt.Sprintf(
-					"No Topics are subscribed by the channel"),
+					"No Topics are subscribed by the configured channel"),
 			}, nil
 		}
 		unMarshalErr := json.Unmarshal(val, &topics)
@@ -64,11 +64,15 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 				Text:         fmt.Sprintf("%s", unMarshalErr.Error()),
 			}, nil
 		}
+		topicNames := make([]string, 0, len(topics.Topics))
+		for topicName := range topics.Topics {
+			topicNames = append(topicNames, topicName)
+		}
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
 			Text: fmt.Sprintf(
-				"Following SNS topics are subscribed by the channel: %s",
-				strings.Join(topics.Topics, ",")),
+				"Following SNS topics are subscribed by the configured channel: %s",
+				strings.Join(topicNames, ",")),
 		}, nil
 	default:
 		return &model.CommandResponse{

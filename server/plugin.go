@@ -225,6 +225,9 @@ func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
 	// if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
 	// 	return
 	// }
+	if err := p.API.KVDelete(p.ChannelID); err != nil {
+		p.API.LogError("Unable to delete KV store upon Unsubscription")
+	}
 	return
 }
 
@@ -355,51 +358,32 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (p *Plugin) updateKVStore(topic string) error {
-	var topics = Topics{
-		Topics: []string{topic},
-	}
+func (p *Plugin) updateKVStore(topicName string) error {
+	var topics = SNSTopics{}
 	val, err := p.API.KVGet(p.ChannelID)
 	if err != nil {
 		p.API.LogError("Unable to Get from KV Store")
 		return err
 	}
 	if val == nil {
-		b, marshalErr := json.Marshal(topics)
-		if marshalErr != nil {
-			p.API.LogError("Unable to marshal Topics struct to JSON")
-			return marshalErr
-		}
-		p.API.KVSet(p.ChannelID, b)
-		return nil
+		// Initialise the map before first assignment
+		topics.Topics = make(map[string]bool)
+		topics.Topics[topicName] = true
 	} else {
-		var existingTopics Topics
-		unmarshalErr := json.Unmarshal(val, &existingTopics)
+		unmarshalErr := json.Unmarshal(val, &topics)
 		if unmarshalErr != nil {
 			p.API.LogError("Unmarshal failed for existing Topics in KV Store")
 			return unmarshalErr
 		}
-		r := isStringInList(topic, existingTopics.Topics)
-		if r == false {
-			existingTopics.Topics = append(existingTopics.Topics, topic)
-			newb, marshalErr := json.Marshal(existingTopics)
-			if marshalErr != nil {
-				p.API.LogError("Unable to marshal New Topics struct to JSON")
-				return marshalErr
-			}
-			p.API.KVSet(p.ChannelID, newb)
-		}
+		topics.Topics[topicName] = true
 	}
+	b, marshalErr := json.Marshal(topics)
+	if marshalErr != nil {
+		p.API.LogError("Unable to marshal Topics struct to JSON")
+		return marshalErr
+	}
+	p.API.KVSet(p.ChannelID, b)
 	return nil
-}
-
-func isStringInList(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }
 
 func (p *Plugin) checkAllowedUsers(userID string) error {

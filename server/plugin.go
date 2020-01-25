@@ -221,14 +221,14 @@ func (p *Plugin) handleNotification(body io.Reader) {
 }
 
 func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
-	// var subscribe SubscribeInput
-	// if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
-	// 	return
-	// }
-	if err := p.API.KVDelete(p.ChannelID); err != nil {
-		p.API.LogError("Unable to delete KV store upon Unsubscription")
+	var subscribe SubscribeInput
+	if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
+		return
 	}
-	return
+	topic := strings.Split(subscribe.TopicArn, ":")[5]
+	if err := p.deleteFromKVStore(topic); err != nil {
+		p.API.LogError("Unable to delete %s from KV Store", topic)
+	}
 }
 
 func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionURL string) {
@@ -381,6 +381,31 @@ func (p *Plugin) updateKVStore(topicName string) error {
 	if marshalErr != nil {
 		p.API.LogError("Unable to marshal Topics struct to JSON")
 		return marshalErr
+	}
+	p.API.KVSet(p.ChannelID, b)
+	return nil
+}
+
+func (p *Plugin) deleteFromKVStore(topicName string) error {
+	val, err := p.API.KVGet(p.ChannelID)
+	if err != nil {
+		p.API.LogError("Unable to Get from KV Store")
+		return err
+	}
+	if val == nil {
+		p.API.LogError("Unexpected: No item found in KV Store")
+		return err
+	}
+	var topics SNSTopics
+	if unmarshalErr := json.Unmarshal(val, &topics); unmarshalErr != nil {
+		p.API.LogError("Failed to Unmarshal into struct")
+		return err
+	}
+	delete(topics.Topics, topicName)
+	b, marshalErr := json.Marshal(topics)
+	if marshalErr != nil {
+		p.API.LogError("Unable to Marshal the Topics struct")
+		return err
 	}
 	p.API.KVSet(p.ChannelID, b)
 	return nil

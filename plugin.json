@@ -2,6 +2,9 @@
     "id": "com.mattermost.aws-sns",
     "name": "AWS SNS",
     "description": "Send alert notifications from Amazon AWS CloudWatch to Mattermost channels via AWS SNS.",
+    "homepage_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/",
+    "support_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/issues",
+    "icon_path": "assets/icon.svg",
     "version": "1.0.2",
     "min_server_version": "5.2.0",
     "server": {

@@ -9,11 +9,11 @@ import (
 	"strings"
 )
 
-const awssns_cmd = "awssns"
+const awsSNSCmd = "awssns"
 
 func (p *Plugin) registerCommands() error {
 	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          awssns_cmd,
+		Trigger:          awsSNSCmd,
 		Description:      "Mattermost slash command to interact with AWS SNS",
 		DisplayName:      "AWS SNS",
 		AutoComplete:     true,
@@ -26,12 +26,13 @@ func (p *Plugin) registerCommands() error {
 	return nil
 }
 
+// ExecuteCommand Implementing the Command functionality for above commands
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	splitCmd := strings.Fields(args.Command)
 	cmd := strings.TrimPrefix(splitCmd[0], "/")
 	action := splitCmd[1]
 
-	if cmd != awssns_cmd {
+	if cmd != awsSNSCmd {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 			Text:         fmt.Sprintf("Unknown Command: " + cmd),

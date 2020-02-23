@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -49,21 +51,36 @@ func (p *Plugin) OnActivate() error {
 	teamSplit := split[0]
 	channelSplit := split[1]
 
-	team, err := p.API.GetTeamByName(teamSplit)
-	if err != nil {
-		return err
+	team, getTeamError := p.API.GetTeamByName(teamSplit)
+	if getTeamError != nil {
+		return getTeamError
 	}
 	p.TeamID = team.Id
 
-	user, err := p.API.GetUserByUsername(p.configuration.Username)
-	if err != nil {
-		p.API.LogError(err.Error())
-		return fmt.Errorf("Unable to find user with configured username: %v", p.configuration.Username)
+	botID, ensureBotError := p.Helpers.EnsureBot(&model.Bot{
+		Username:    "aws-sns",
+		DisplayName: "AWS SNS Plugin",
+		Description: "A bot account created by the plugin AWS SNS",
+	})
+	if ensureBotError != nil {
+		return errors.Wrap(ensureBotError, "can't ensure bot")
 	}
-	p.BotUserID = user.Id
+	p.BotUserID = botID
 
-	channel, err := p.API.GetChannelByName(team.Id, channelSplit, false)
-	if err != nil && err.StatusCode == http.StatusNotFound {
+	bundlePath, err := p.API.GetBundlePath()
+	if err != nil {
+		return errors.Wrap(err, "can't retrieve bundle path")
+	}
+	profileImage, err := ioutil.ReadFile(filepath.Join(bundlePath, "assets", "profile.png"))
+	if err != nil {
+		return errors.Wrap(err, "failed to read profile image")
+	}
+	if appErr := p.API.SetProfileImage(botID, profileImage); appErr != nil {
+		return errors.Wrap(err, "failed to set profile image")
+	}
+
+	channel, appError := p.API.GetChannelByName(team.Id, channelSplit, false)
+	if appError != nil && appError.StatusCode == http.StatusNotFound {
 		channelToCreate := &model.Channel{
 			Name:        channelSplit,
 			DisplayName: channelSplit,
@@ -201,11 +218,6 @@ func (p *Plugin) handleNotification(body io.Reader) {
 	post := &model.Post{
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
-		Props: map[string]interface{}{
-			"from_webhook":      "true",
-			"override_username": SNS_USERNAME,
-			"override_icon_url": SNS_ICON_URL,
-		},
 	}
 
 	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
@@ -252,12 +264,6 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 		Message:   "",
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
-		Props: model.StringInterface{
-			"attachments":       attachments,
-			"override_username": SNS_USERNAME,
-			"override_icon_url": SNS_ICON_URL,
-			"from_webhook":      "true",
-		},
 	}
 
 	if _, err := p.API.CreatePost(spinPost); err != nil {

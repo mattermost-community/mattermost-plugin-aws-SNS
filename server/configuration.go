@@ -20,7 +20,6 @@ import (
 type configuration struct {
 	TeamChannel    string
 	AllowedUserIds string
-	Username       string
 	Token          string
 }
 

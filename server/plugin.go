@@ -35,6 +35,8 @@ const (
 	SNS_USERNAME = "AWS SNS Bot"
 )
 
+const topicsListPrefix = "topicsInChannel_"
+
 func (p *Plugin) OnActivate() error {
 	configuration := p.getConfiguration()
 
@@ -360,7 +362,7 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 
 func (p *Plugin) updateKVStore(topicName string) error {
 	var topics = SNSTopics{}
-	val, err := p.API.KVGet(p.ChannelID)
+	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
 	if err != nil {
 		p.API.LogError("Unable to Get from KV Store")
 		return err
@@ -382,12 +384,12 @@ func (p *Plugin) updateKVStore(topicName string) error {
 		p.API.LogError("Unable to marshal Topics struct to JSON")
 		return marshalErr
 	}
-	p.API.KVSet(p.ChannelID, b)
+	p.API.KVSet(topicsListPrefix+p.ChannelID, b)
 	return nil
 }
 
 func (p *Plugin) deleteFromKVStore(topicName string) error {
-	val, err := p.API.KVGet(p.ChannelID)
+	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
 	if err != nil {
 		p.API.LogError("Unable to Get from KV Store")
 		return err
@@ -407,7 +409,7 @@ func (p *Plugin) deleteFromKVStore(topicName string) error {
 		p.API.LogError("Unable to Marshal the Topics struct")
 		return err
 	}
-	p.API.KVSet(p.ChannelID, b)
+	p.API.KVSet(topicsListPrefix+p.ChannelID, b)
 	return nil
 }
 

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// SubscribeInput - To hold the subscription and unsubscription confirmation
+// SubscribeInput - holds subscription and unsubscription confirmation
 type SubscribeInput struct {
 	Type             string    `json:"Type,omitempty"`
 	MessageID        string    `json:"MessageId,omitempty"`
@@ -18,7 +18,7 @@ type SubscribeInput struct {
 	SigningCertURL   string    `json:"SigningCertURL,omitempty"`
 }
 
-// SNSNotification To hold SNS Notification from AWS
+// SNSNotification holds SNS Notification from AWS
 type SNSNotification struct {
 	Type             string    `json:"Type,omitempty"`
 	MessageID        string    `json:"MessageId,omitempty"`
@@ -33,7 +33,7 @@ type SNSNotification struct {
 	UnsubscribeURL   string    `json:"UnsubscribeURL,omitempty"`
 }
 
-// SNSMessageNotification To hold the CloudWatch Alarm message from AWS
+// SNSMessageNotification holds the CloudWatch Alarm message from AWS
 type SNSMessageNotification struct {
 	AlarmName        string `json:"AlarmName"`
 	AlarmDescription string `json:"AlarmDescription,omitempty"`

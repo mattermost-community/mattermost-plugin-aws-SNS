@@ -12,21 +12,22 @@ import (
 const awsSNSCmd = "awssns"
 
 func (p *Plugin) registerCommands() error {
-	if err := p.API.RegisterCommand(&model.Command{
+	err := p.API.RegisterCommand(&model.Command{
 		Trigger:          awsSNSCmd,
 		Description:      "Mattermost slash command to interact with AWS SNS",
 		DisplayName:      "AWS SNS",
 		AutoComplete:     true,
 		AutoCompleteHint: "listTopics",
 		AutoCompleteDesc: "List Topics which are subscribed to the channel",
-	}); err != nil {
+	})
+	if err != nil {
 		return errors.Wrapf(err, "failed to register awssns command")
 	}
 
 	return nil
 }
 
-// ExecuteCommand Implementing the Command functionality for above commands
+// ExecuteCommand executes a command that has been previously registered via the RegisterCommand API
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	splitCmd := strings.Fields(args.Command)
 	cmd := strings.TrimPrefix(splitCmd[0], "/")
@@ -41,44 +42,47 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	switch action {
 	case "listTopics":
-		var topics SNSTopics
-		val, err := p.API.KVGet(p.ChannelID)
-		if err != nil {
-			p.API.LogError("Failed to Get from KV Store")
-			return &model.CommandResponse{
-				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text:         fmt.Sprintf("%s", err.Error()),
-			}, nil
-		}
-		if val == nil {
-			return &model.CommandResponse{
-				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text: fmt.Sprintf(
-					"No Topics are subscribed by the configured channel"),
-			}, nil
-		}
-		unMarshalErr := json.Unmarshal(val, &topics)
-		if unMarshalErr != nil {
-			p.API.LogError("Failed to Unmarshal")
-			return &model.CommandResponse{
-				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text:         fmt.Sprintf("%s", unMarshalErr.Error()),
-			}, nil
-		}
-		topicNames := make([]string, 0, len(topics.Topics))
-		for topicName := range topics.Topics {
-			topicNames = append(topicNames, topicName)
-		}
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
-			Text: fmt.Sprintf(
-				"Following SNS topics are subscribed by the configured channel: %s",
-				strings.Join(topicNames, ",")),
-		}, nil
+		return p.listTopicsToChannel(), nil
 	default:
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 			Text:         fmt.Sprintf("Unknown Action: " + action),
 		}, nil
+	}
+}
+
+// listTopicsToChannel Lists topics subscribed to the channel
+func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
+	var topics SNSTopics
+	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
+	if err != nil {
+		p.API.LogError("Failed to Get from KV Store")
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         fmt.Sprintf("%s", err.Error()),
+		}
+	}
+	if val == nil {
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text: fmt.Sprintf(
+				"No Topics are subscribed by the configured channel"),
+		}
+	}
+	unMarshalErr := json.Unmarshal(val, &topics)
+	if unMarshalErr != nil {
+		p.API.LogError("Failed to Unmarshal")
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         fmt.Sprintf("%s", unMarshalErr.Error()),
+		}
+	}
+	resp := "The following SNS topics are subscribed by the configured channel\n"
+	for topicName := range topics.Topics {
+		resp = resp + "* " + topicName + "\n"
+	}
+	return &model.CommandResponse{
+		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
+		Text:         fmt.Sprintf("%s", resp),
 	}
 }

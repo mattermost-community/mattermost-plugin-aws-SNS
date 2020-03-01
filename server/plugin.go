@@ -75,7 +75,7 @@ func (p *Plugin) OnActivate() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to read profile image")
 	}
-	if appErr := p.API.SetProfileImage(botID, profileImage); appErr != nil {
+	if appErr = p.API.SetProfileImage(botID, profileImage); appErr != nil {
 		return errors.Wrap(err, "failed to set profile image")
 	}
 

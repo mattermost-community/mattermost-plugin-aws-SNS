@@ -51,19 +51,19 @@ func (p *Plugin) OnActivate() error {
 	teamSplit := split[0]
 	channelSplit := split[1]
 
-	team, getTeamError := p.API.GetTeamByName(teamSplit)
-	if getTeamError != nil {
-		return getTeamError
+	team, appErr := p.API.GetTeamByName(teamSplit)
+	if appErr != nil {
+		return appErr
 	}
 	p.TeamID = team.Id
 
-	botID, ensureBotError := p.Helpers.EnsureBot(&model.Bot{
+	botID, err := p.Helpers.EnsureBot(&model.Bot{
 		Username:    "aws-sns",
 		DisplayName: "AWS SNS Plugin",
 		Description: "A bot account created by the plugin AWS SNS",
 	})
-	if ensureBotError != nil {
-		return errors.Wrap(ensureBotError, "can't ensure bot")
+	if err != nil {
+		return errors.Wrap(err, "can't ensure bot")
 	}
 	p.BotUserID = botID
 
@@ -79,8 +79,8 @@ func (p *Plugin) OnActivate() error {
 		return errors.Wrap(err, "failed to set profile image")
 	}
 
-	channel, appError := p.API.GetChannelByName(team.Id, channelSplit, false)
-	if appError != nil && appError.StatusCode == http.StatusNotFound {
+	channel, appErr := p.API.GetChannelByName(team.Id, channelSplit, false)
+	if appErr != nil && appErr.StatusCode == http.StatusNotFound {
 		channelToCreate := &model.Channel{
 			Name:        channelSplit,
 			DisplayName: channelSplit,

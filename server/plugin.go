@@ -61,7 +61,9 @@ func (p *Plugin) OnActivate() error {
 		Username:    "aws-sns",
 		DisplayName: "AWS SNS Plugin",
 		Description: "A bot account created by the plugin AWS SNS",
-	})
+	},
+	plugin.ProfileImagePath("assets/profile.png")
+	)
 	if err != nil {
 		return errors.Wrap(err, "can't ensure bot")
 	}

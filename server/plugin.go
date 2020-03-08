@@ -78,7 +78,7 @@ func (p *Plugin) OnActivate() error {
 		return errors.Wrap(err, "failed to read profile image")
 	}
 	if appErr = p.API.SetProfileImage(botID, profileImage); appErr != nil {
-		return errors.Wrap(err, "failed to set profile image")
+		return errors.Wrap(appErr, "failed to set profile image")
 	}
 
 	channel, appErr := p.API.GetChannelByName(team.Id, channelSplit, false)

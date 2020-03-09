@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -62,24 +60,12 @@ func (p *Plugin) OnActivate() error {
 		DisplayName: "AWS SNS Plugin",
 		Description: "A bot account created by the plugin AWS SNS",
 	},
-	plugin.ProfileImagePath("assets/profile.png"),
+		plugin.ProfileImagePath("assets/profile.png"),
 	)
 	if err != nil {
 		return errors.Wrap(err, "can't ensure bot")
 	}
 	p.BotUserID = botID
-
-	bundlePath, err := p.API.GetBundlePath()
-	if err != nil {
-		return errors.Wrap(err, "can't retrieve bundle path")
-	}
-	profileImage, err := ioutil.ReadFile(filepath.Join(bundlePath, "assets", "profile.png"))
-	if err != nil {
-		return errors.Wrap(err, "failed to read profile image")
-	}
-	if appErr = p.API.SetProfileImage(botID, profileImage); appErr != nil {
-		return errors.Wrap(appErr, "failed to set profile image")
-	}
 
 	channel, appErr := p.API.GetChannelByName(team.Id, channelSplit, false)
 	if appErr != nil && appErr.StatusCode == http.StatusNotFound {

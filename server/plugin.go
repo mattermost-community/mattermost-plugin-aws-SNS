@@ -158,6 +158,7 @@ func (p *Plugin) handleNotification(body io.Reader) {
 	var messageNotification SNSMessageNotification
 	if err := json.Unmarshal([]byte(notification.Message), &messageNotification); err != nil {
 		p.API.LogDebug("AWSSNS HandleNotification Decode Error on message notification", "err=", err.Error())
+		p.API.LogError("AWSSNS HandleNotification Decode Error", "notification.Message=", notification.Message)
 		return
 	}
 

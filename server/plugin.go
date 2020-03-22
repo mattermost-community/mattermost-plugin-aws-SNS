@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,6 +34,8 @@ const (
 	SNS_ICON_URL = "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/App_Services_copy_Amazon_SNS-512.png"
 	SNS_USERNAME = "AWS SNS Bot"
 )
+
+const topicsListPrefix = "topicsInChannel_"
 
 func (p *Plugin) OnActivate() error {
 	configuration := p.getConfiguration()
@@ -81,6 +84,10 @@ func (p *Plugin) OnActivate() error {
 		return err
 	} else {
 		p.ChannelID = channel.Id
+	}
+
+	if err := p.registerCommands(); err != nil {
+		return err
 	}
 
 	return nil
@@ -216,11 +223,14 @@ func (p *Plugin) handleNotification(body io.Reader) {
 }
 
 func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
-	// var subscribe SubscribeInput
-	// if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
-	// 	return
-	// }
-	return
+	var subscribe SubscribeInput
+	if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
+		return
+	}
+	topic := strings.Split(subscribe.TopicArn, ":")[5]
+	if err := p.deleteFromKVStore(topic); err != nil {
+		p.API.LogError("Unable to delete %s from KV Store", topic)
+	}
 }
 
 func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionURL string) {
@@ -330,12 +340,77 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 			}
 
 			encodeEphermalMessage(w, "Subscription Confirmed.")
+
+			// Extract the topic from Subscription Confirmation URL
+			query, err := url.ParseQuery(action.Context.SubscriptionURL)
+			if err != nil {
+				p.API.LogError("Unable to parse Subscribe URL from AWS SNS")
+				return
+			}
+			topic := strings.Split(query.Get("TopicArn"), ":")[5]
+			// Store this topic in KV Store
+			if err = p.updateKVStore(topic); err != nil {
+				p.API.LogError("Unable to store AWS SNS Topic in KV Store")
+			}
 			return
 		}
 	default:
 		http.NotFound(w, r)
 		return
 	}
+}
+
+func (p *Plugin) updateKVStore(topicName string) error {
+	var topics = SNSTopics{}
+	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
+	if err != nil {
+		p.API.LogError("Unable to Get from KV Store")
+		return err
+	}
+	if val == nil {
+		// Initialise the map before first assignment
+		topics.Topics = make(map[string]bool)
+		topics.Topics[topicName] = true
+	} else {
+		unmarshalErr := json.Unmarshal(val, &topics)
+		if unmarshalErr != nil {
+			p.API.LogError("Unmarshal failed for existing Topics in KV Store")
+			return unmarshalErr
+		}
+		topics.Topics[topicName] = true
+	}
+	b, marshalErr := json.Marshal(topics)
+	if marshalErr != nil {
+		p.API.LogError("Unable to marshal Topics struct to JSON")
+		return marshalErr
+	}
+	p.API.KVSet(topicsListPrefix+p.ChannelID, b)
+	return nil
+}
+
+func (p *Plugin) deleteFromKVStore(topicName string) error {
+	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
+	if err != nil {
+		p.API.LogError("Unable to Get from KV Store")
+		return err
+	}
+	if val == nil {
+		p.API.LogError("Unexpected: No item found in KV Store")
+		return err
+	}
+	var topics SNSTopics
+	if unmarshalErr := json.Unmarshal(val, &topics); unmarshalErr != nil {
+		p.API.LogError("Failed to Unmarshal into struct")
+		return err
+	}
+	delete(topics.Topics, topicName)
+	b, marshalErr := json.Marshal(topics)
+	if marshalErr != nil {
+		p.API.LogError("Unable to Marshal the Topics struct")
+		return err
+	}
+	p.API.KVSet(topicsListPrefix+p.ChannelID, b)
+	return nil
 }
 
 func (p *Plugin) checkAllowedUsers(userID string) error {

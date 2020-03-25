@@ -292,7 +292,8 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 	var action *Action
 	err := json.NewDecoder(r.Body).Decode(&action)
 	if err != nil || action == nil {
-		encodeEphermalMessage(w, "SNS BOT Error: We could not decode the action")
+		encodeEphermalMessage(w, fmt.Sprintf("SNS BOT Error: We could not decode the action. Error=%s", err.Error()))
+		p.API.LogError("SNS BOT Error: We could not decode the action.", "err=", err.Error())
 		return
 	}
 

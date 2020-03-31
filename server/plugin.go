@@ -30,11 +30,6 @@ type Plugin struct {
 	BotUserID string
 }
 
-const (
-	SNS_ICON_URL = "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/App_Services_copy_Amazon_SNS-512.png"
-	SNS_USERNAME = "AWS SNS Bot"
-)
-
 const topicsListPrefix = "topicsInChannel_"
 
 func (p *Plugin) OnActivate() error {

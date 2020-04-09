@@ -1,4 +1,9 @@
-# AWS SNS Plugin [![CircleCI](https://circleci.com/gh/mattermost/mattermost-plugin-aws-SNS.svg?style=svg)](https://circleci.com/gh/mattermost/mattermost-plugin-aws-SNS)
+# AWS SNS Plugin
+
+[![CircleCI](https://circleci.com/gh/mattermost/mattermost-plugin-aws-SNS.svg?style=svg)](https://circleci.com/gh/mattermost/mattermost-plugin-aws-SNS)
+
+**Maintainer:** [@mickmister](https://github.com/mickmister)
+**Co-Maintainer:** [@jfrerich](https://github.com/jfrerich)
 
 Send alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS.
 

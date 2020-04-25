@@ -261,7 +261,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
 		Props: model.StringInterface{
-			"attachments":       attachments,
+			"attachments": attachments,
 		},
 	}
 

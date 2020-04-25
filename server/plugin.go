@@ -260,6 +260,9 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 		Message:   "",
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
+		Props: model.StringInterface{
+			"attachments":       attachments,
+		},
 	}
 
 	if _, err := p.API.CreatePost(spinPost); err != nil {

@@ -30,11 +30,6 @@ type Plugin struct {
 	BotUserID string
 }
 
-const (
-	SNS_ICON_URL = "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/App_Services_copy_Amazon_SNS-512.png"
-	SNS_USERNAME = "AWS SNS Bot"
-)
-
 const topicsListPrefix = "topicsInChannel_"
 
 func (p *Plugin) OnActivate() error {
@@ -52,21 +47,26 @@ func (p *Plugin) OnActivate() error {
 	teamSplit := split[0]
 	channelSplit := split[1]
 
-	team, err := p.API.GetTeamByName(teamSplit)
-	if err != nil {
-		return err
+	team, appErr := p.API.GetTeamByName(teamSplit)
+	if appErr != nil {
+		return appErr
 	}
 	p.TeamID = team.Id
 
-	user, err := p.API.GetUserByUsername(p.configuration.Username)
+	botID, err := p.Helpers.EnsureBot(&model.Bot{
+		Username:    "aws-sns",
+		DisplayName: "AWS SNS Plugin",
+		Description: "A bot account created by the plugin AWS SNS",
+	},
+		plugin.ProfileImagePath("assets/icon.png"),
+	)
 	if err != nil {
-		p.API.LogError(err.Error())
-		return fmt.Errorf("Unable to find user with configured username: %v", p.configuration.Username)
+		return errors.Wrap(err, "can't ensure bot")
 	}
-	p.BotUserID = user.Id
+	p.BotUserID = botID
 
-	channel, err := p.API.GetChannelByName(team.Id, channelSplit, false)
-	if err != nil && err.StatusCode == http.StatusNotFound {
+	channel, appErr := p.API.GetChannelByName(team.Id, channelSplit, false)
+	if appErr != nil && appErr.StatusCode == http.StatusNotFound {
 		channelToCreate := &model.Channel{
 			Name:        channelSplit,
 			DisplayName: channelSplit,
@@ -211,11 +211,6 @@ func (p *Plugin) handleNotification(body io.Reader) {
 	post := &model.Post{
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
-		Props: map[string]interface{}{
-			"from_webhook":      "true",
-			"override_username": SNS_USERNAME,
-			"override_icon_url": SNS_ICON_URL,
-		},
 	}
 
 	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
@@ -266,10 +261,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
 		Props: model.StringInterface{
-			"attachments":       attachments,
-			"override_username": SNS_USERNAME,
-			"override_icon_url": SNS_ICON_URL,
-			"from_webhook":      "true",
+			"attachments": attachments,
 		},
 	}
 

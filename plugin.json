@@ -5,7 +5,7 @@
     "homepage_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/",
     "support_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/issues",
     "icon_path": "assets/icon.svg",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "min_server_version": "5.2.0",
     "server": {
         "executables": {

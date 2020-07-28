@@ -37,7 +37,7 @@ Note: If you are running Mattermost v5.11 or earlier, you must first go to the [
 
 1. Create an [AWS CloudWatch alarm for your instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-createalarm.html). 
 
-2. Create an AWS SNS Topic with an HTTPS subscription to https://your-mattermost-url/plugins/com.mattermost.aws-sns?token=your-mattermost-token`, where `your-mattermost-url` refers to your Mattermost URL, and `your-mattermost-token` was generated on a previous step. [Follow this documentation](https://docs.safe.com/fme/html/FME_Server_Documentation/ReferenceManual/Amazon_SNS_Publisher_Configure_AWS_Subscription.html) for additional configuration options.
+2. Create an AWS SNS Topic with an HTTPS subscription to https://your-mattermost-url/plugins/com.mattermost.aws-sns?token=your-mattermost-token`, where `your-mattermost-url` refers to your Mattermost URL, and `your-mattermost-token` was generated on a previous step. [Follow this documentation](https://docs.safe.com/fme/html/FME_Server_Documentation/ReferenceManual/Amazon_SNS_Publisher_Configure_AWS_Subscription.htm) for additional configuration options.
 
 3. Switch to the Mattermost channel you configured to receive notifications. Accept the subscription posted to the channel by clicking the "Confirm" button.
 

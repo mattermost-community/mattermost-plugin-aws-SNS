@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 const awsSNSCmd = "awssns"
@@ -59,14 +60,13 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 		p.API.LogError("Failed to Get from KV Store")
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("%s", err.Error()),
+			Text:         err.Error(),
 		}
 	}
 	if val == nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text: fmt.Sprintf(
-				"No Topics are subscribed by the configured channel"),
+			Text:         "No Topics are subscribed by the configured channel",
 		}
 	}
 	unMarshalErr := json.Unmarshal(val, &topics)
@@ -74,7 +74,7 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 		p.API.LogError("Failed to Unmarshal")
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("%s", unMarshalErr.Error()),
+			Text:         unMarshalErr.Error(),
 		}
 	}
 	resp := "The following SNS topics are subscribed by the configured channel\n"
@@ -83,6 +83,6 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 	}
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
-		Text:         fmt.Sprintf("%s", resp),
+		Text:         (resp),
 	}
 }

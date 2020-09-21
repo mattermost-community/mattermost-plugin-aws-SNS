@@ -83,6 +83,6 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 	}
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
-		Text:         (resp),
+		Text:         resp,
 	}
 }

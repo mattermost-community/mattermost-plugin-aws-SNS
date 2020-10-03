@@ -95,11 +95,11 @@ func (p *Plugin) OnActivate() error {
 
 func (p *Plugin) IsValid(configuration *configuration) error {
 	if configuration.TeamChannel == "" {
-		return fmt.Errorf("Must set a Team and a Channel.")
+		return fmt.Errorf("must set a Team and a Channel")
 	}
 
 	if configuration.AllowedUserIds == "" {
-		return fmt.Errorf("Must set at least one User.")
+		return fmt.Errorf("must set at least one User")
 	}
 
 	return nil
@@ -114,33 +114,25 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	snsMessageType := r.Header.Get("x-amz-sns-message-type")
 	if snsMessageType == "" {
 		p.handleAction(w, r)
-
 	} else {
 		switch snsMessageType {
 		case "SubscriptionConfirmation":
 			p.handleSubscriptionConfirmation(r.Body)
-			break
 		case "Notification":
 			p.API.LogDebug("AWSSNS HandleNotification")
 			p.handleNotification(r.Body)
-			break
 
 		case "UnsubscribeConfirmation":
 			p.handleUnsubscribeConfirmation(r.Body)
-			break
 		default:
 			break
 		}
 	}
-
-	return
-
 }
-
 func (p *Plugin) checkToken(r *http.Request) error {
 	token := r.URL.Query().Get("token")
 	if token == "" || strings.Compare(token, p.configuration.Token) != 0 {
-		return fmt.Errorf("Invalid or missing token")
+		return fmt.Errorf("invalid or missing token")
 	}
 	return nil
 }
@@ -152,7 +144,6 @@ func (p *Plugin) handleSubscriptionConfirmation(body io.Reader) {
 	}
 
 	p.sendSubscribeConfirmationMessage(subscribe.Message, subscribe.SubscribeURL)
-	return
 }
 
 func (p *Plugin) handleNotification(body io.Reader) {
@@ -217,7 +208,6 @@ func (p *Plugin) handleNotification(body io.Reader) {
 	if _, appErr := p.API.CreatePost(post); appErr != nil {
 		return
 	}
-	return
 }
 
 func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
@@ -242,7 +232,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 				"action":           "confirm",
 				"subscription_url": subscriptionURL,
 			},
-			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v", siteURLPort, manifest.Id, p.configuration.Token),
+			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v", siteURLPort, manifest.ID, p.configuration.Token),
 		},
 	}
 
@@ -277,7 +267,6 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 		"user_id", p.BotUserID,
 		"subscriptionURL", subscriptionURL,
 	)
-
 }
 
 func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
@@ -296,11 +285,12 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 	case "/confirm":
-		_, err := http.Get(action.Context.SubscriptionURL)
+		resp, err := http.Get(action.Context.SubscriptionURL)
 		if err != nil {
 			encodeEphermalMessage(w, err.Error())
 			return
 		}
+		defer resp.Body.Close()
 
 		updatePost := &model.Post{}
 		updateAttachment := &model.SlackAttachment{}
@@ -364,7 +354,7 @@ func (p *Plugin) updateKVStore(topicName string) error {
 		return err
 	}
 	if val == nil {
-		// Initialise the map before first assignment
+		// Initialize the map before first assignment
 		topics.Topics = make(map[string]bool)
 		topics.Topics[topicName] = true
 	} else {
@@ -410,9 +400,8 @@ func (p *Plugin) deleteFromKVStore(topicName string) error {
 }
 
 func (p *Plugin) checkAllowedUsers(userID string) error {
-
 	if userID == "" {
-		return fmt.Errorf("Need a user id")
+		return fmt.Errorf("need a user id")
 	}
 
 	hasPremissions := false
@@ -425,7 +414,7 @@ func (p *Plugin) checkAllowedUsers(userID string) error {
 	}
 
 	if !hasPremissions {
-		return fmt.Errorf("You don't have permissions to use this command. Please talk with your SysAdmin.")
+		return fmt.Errorf("you don't have permissions to use this command. Please talk with your SysAdmin")
 	}
 
 	return nil

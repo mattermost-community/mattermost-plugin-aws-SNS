@@ -63,8 +63,8 @@ type SNSMessageNotification struct {
 }
 
 type SNSRdsEventNotification struct {
-	EventSource string `json:"Event Source"`
-	EventTime string `json:"Event Time"`
+	EventSource    string `json:"Event Source"`
+	EventTime      string `json:"Event Time"`
 	IdentifierLink string `json:"Identifier Link"`
 	SourceID       string `json:"Source ID"`
 	EventID        string `json:"Event ID"`

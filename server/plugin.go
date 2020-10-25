@@ -153,23 +153,24 @@ func (p *Plugin) handleNotification(body io.Reader) {
 		return
 	}
 
-	var attachment model.SlackAttachment
-	isRdsEvent, messageNotification := p.isRDSEvent(notification.Message)
-	if isRdsEvent {
+	if isRdsEvent, messageNotification := p.isRDSEvent(notification.Message); isRdsEvent {
 		p.API.LogDebug("Processing RDS Event")
-		attachment = p.createSNSRdsEventAttachment(notification.Subject, messageNotification)
-	} else if isAlarm, messageNotification := p.isCloudWatchAlarm(notification.Message); isAlarm {
-		p.API.LogDebug("Processing CloudWatch alarm")
-		attachment = p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification)
-	} else {
+		p.sendPostNotification(p.createSNSRdsEventAttachment(notification.Subject, messageNotification))
 		return
 	}
 
+	if isAlarm, messageNotification := p.isCloudWatchAlarm(notification.Message); isAlarm {
+		p.API.LogDebug("Processing CloudWatch alarm")
+		p.sendPostNotification(p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification))
+		return
+	}
+}
+
+func (p *Plugin) sendPostNotification(attachment model.SlackAttachment) {
 	post := &model.Post{
 		ChannelId: p.ChannelID,
 		UserId:    p.BotUserID,
 	}
-
 	model.ParseSlackAttachment(post, []*model.SlackAttachment{&attachment})
 	if _, appErr := p.API.CreatePost(post); appErr != nil {
 		return

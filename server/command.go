@@ -32,7 +32,11 @@ func (p *Plugin) registerCommands() error {
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	splitCmd := strings.Fields(args.Command)
 	cmd := strings.TrimPrefix(splitCmd[0], "/")
-	action := splitCmd[1]
+
+	action := ""
+	if len(splitCmd) > 1 {
+		action = splitCmd[1]
+	}
 
 	if cmd != awsSNSCmd {
 		return &model.CommandResponse{

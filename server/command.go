@@ -18,8 +18,9 @@ func (p *Plugin) registerCommands() error {
 		Description:      "Mattermost slash command to interact with AWS SNS",
 		DisplayName:      "AWS SNS",
 		AutoComplete:     true,
-		AutoCompleteHint: "listTopics",
-		AutoCompleteDesc: "List Topics which are subscribed to the channel",
+		AutoCompleteHint: "[command]",
+		AutoCompleteDesc: "Available commands: list-topics",
+		AutocompleteData: getAutoCompleteData(),
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to register awssns command")
@@ -42,7 +43,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}
 
 	switch action {
-	case "listTopics":
+	case "list-topics":
 		return p.listTopicsToChannel(), nil
 	default:
 		return &model.CommandResponse{
@@ -85,4 +86,11 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
 		Text:         resp,
 	}
+}
+
+func getAutoCompleteData() *model.AutocompleteData {
+	aws := model.NewAutocompleteData(awsSNSCmd, "[command]", "Available commands: list-topics")
+	listTopics := model.NewAutocompleteData("list-topics", "", "Lists Topics which are subscribed to the channel")
+	aws.AddCommand(listTopics)
+	return aws
 }

@@ -15,6 +15,11 @@ import (
 const awsSNSCmd = "awssns"
 
 func (p *Plugin) registerCommands() error {
+	iconData, iconError := command.GetIconData(p.API, "assets/icon.svg")
+	if iconError != nil {
+		return errors.Wrapf(iconError, "Failed to get icon data")
+	}
+
 	err := p.API.RegisterCommand(&model.Command{
 		Trigger:              awsSNSCmd,
 		Description:          "Mattermost slash command to interact with AWS SNS",
@@ -23,7 +28,7 @@ func (p *Plugin) registerCommands() error {
 		AutoCompleteHint:     "[command]",
 		AutoCompleteDesc:     "Available commands: list-topics",
 		AutocompleteData:     getAutoCompleteData(),
-		AutocompleteIconData: p.getAutoCompleteIconData(),
+		AutocompleteIconData: iconData,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to register awssns command")
@@ -96,12 +101,4 @@ func getAutoCompleteData() *model.AutocompleteData {
 	listTopics := model.NewAutocompleteData("list-topics", "", "Lists Topics which are subscribed to the channel")
 	aws.AddCommand(listTopics)
 	return aws
-}
-
-func (p *Plugin) getAutoCompleteIconData() string {
-	iconData, err := command.GetIconData(p.API, "assets/icon.svg")
-	if err != nil {
-		errors.Wrap(err, "Failed to get icon data")
-	}
-	return iconData
 }

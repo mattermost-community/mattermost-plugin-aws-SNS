@@ -101,7 +101,7 @@ func getAutoCompleteData() *model.AutocompleteData {
 func (p *Plugin) getAutoCompleteIconData() string {
 	iconData, err := command.GetIconData(p.API, "assets/icon.svg")
 	if err != nil {
-		p.API.LogError("Failed to get icon data")
+		errors.Wrap(err, "Failed to get icon data")
 	}
 	return iconData
 }

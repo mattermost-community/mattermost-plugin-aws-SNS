@@ -8,19 +8,27 @@ import (
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-api/experimental/command"
 )
 
 const awsSNSCmd = "awssns"
 
 func (p *Plugin) registerCommands() error {
+	iconData, iconError := command.GetIconData(p.API, "assets/icon.svg")
+	if iconError != nil {
+		return errors.Wrapf(iconError, "Failed to get icon data")
+	}
+
 	err := p.API.RegisterCommand(&model.Command{
-		Trigger:          awsSNSCmd,
-		Description:      "Mattermost slash command to interact with AWS SNS",
-		DisplayName:      "AWS SNS",
-		AutoComplete:     true,
-		AutoCompleteHint: "[command]",
-		AutoCompleteDesc: "Available commands: list-topics",
-		AutocompleteData: getAutoCompleteData(),
+		Trigger:              awsSNSCmd,
+		Description:          "Mattermost slash command to interact with AWS SNS",
+		DisplayName:          "AWS SNS",
+		AutoComplete:         true,
+		AutoCompleteHint:     "[command]",
+		AutoCompleteDesc:     "Available commands: list-topics",
+		AutocompleteData:     getAutoCompleteData(),
+		AutocompleteIconData: iconData,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to register awssns command")

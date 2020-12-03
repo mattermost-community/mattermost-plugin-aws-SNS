@@ -153,16 +153,75 @@ func (p *Plugin) handleNotification(body io.Reader) {
 		return
 	}
 
-	var messageNotification SNSMessageNotification
-	if err := json.Unmarshal([]byte(notification.Message), &messageNotification); err != nil {
-		p.API.LogError(
-			"AWSSNS HandleNotification Decode Error on message notification",
-			"err", err.Error(),
-			"message", notification.Message)
+	if isRdsEvent, messageNotification := p.isRDSEvent(notification.Message); isRdsEvent {
+		p.API.LogDebug("Processing RDS Event")
+		p.sendPostNotification(p.createSNSRdsEventAttachment(notification.Subject, messageNotification))
 		return
 	}
 
-	p.API.LogDebug("AWSSNS HandleNotification", "MESSAGE", notification.Subject)
+	if isAlarm, messageNotification := p.isCloudWatchAlarm(notification.Message); isAlarm {
+		p.API.LogDebug("Processing CloudWatch alarm")
+		p.sendPostNotification(p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification))
+		return
+	}
+}
+
+func (p *Plugin) sendPostNotification(attachment model.SlackAttachment) {
+	post := &model.Post{
+		ChannelId: p.ChannelID,
+		UserId:    p.BotUserID,
+	}
+	model.ParseSlackAttachment(post, []*model.SlackAttachment{&attachment})
+	if _, appErr := p.API.CreatePost(post); appErr != nil {
+		return
+	}
+}
+
+func (p *Plugin) isCloudWatchAlarm(message string) (bool, SNSMessageNotification) {
+	var messageNotification SNSMessageNotification
+	if err := json.Unmarshal([]byte(message), &messageNotification); err != nil {
+		p.API.LogError(
+			"AWSSNS HandleNotification Decode Error on CloudWatch message notification",
+			"err", err.Error(),
+			"message", message)
+		return false, messageNotification
+	}
+
+	return len(messageNotification.AlarmName) > 0, messageNotification
+}
+
+func (p *Plugin) isRDSEvent(message string) (bool, SNSRdsEventNotification) {
+	var messageNotification SNSRdsEventNotification
+	if err := json.Unmarshal([]byte(message), &messageNotification); err != nil {
+		p.API.LogError(
+			"AWSSNS HandleNotification Decode Error on RDS-Event message notification",
+			"err", err.Error(),
+			"message", message)
+		return false, messageNotification
+	}
+	return len(messageNotification.EventID) > 0, messageNotification
+}
+
+func (p *Plugin) createSNSRdsEventAttachment(subject string, messageNotification SNSRdsEventNotification) model.SlackAttachment {
+	p.API.LogDebug("AWSSNS HandleNotification RDS Event", "MESSAGE", subject)
+	var fields []*model.SlackAttachmentField
+	fields = addFields(fields, "Event Source", messageNotification.EventSource, true)
+	fields = addFields(fields, "Event Time", messageNotification.EventTime, true)
+	fields = addFields(fields, "Identifier Link", messageNotification.IdentifierLink, true)
+	fields = addFields(fields, "Source ID", messageNotification.SourceID, true)
+	fields = addFields(fields, "Event ID", messageNotification.EventID, true)
+	fields = addFields(fields, "Event Message", messageNotification.EventMessage, true)
+
+	attachment := model.SlackAttachment{
+		Title:  subject,
+		Fields: fields,
+	}
+
+	return attachment
+}
+
+func (p *Plugin) createSNSMessageNotificationAttachment(subject string, messageNotification SNSMessageNotification) model.SlackAttachment {
+	p.API.LogDebug("AWSSNS HandleNotification", "MESSAGE", subject)
 	var fields []*model.SlackAttachmentField
 	fields = addFields(fields, "AlarmName", messageNotification.AlarmName, true)
 	fields = addFields(fields, "AlarmDescription", messageNotification.AlarmDescription, true)
@@ -193,23 +252,14 @@ func (p *Plugin) handleNotification(body io.Reader) {
 		msgColor = "#FFFF00"
 	}
 
-	attachment := &model.SlackAttachment{
-		Title:  notification.Subject,
+	attachment := model.SlackAttachment{
+		Title:  subject,
 		Fields: fields,
 		Color:  msgColor,
 	}
 
-	post := &model.Post{
-		ChannelId: p.ChannelID,
-		UserId:    p.BotUserID,
-	}
-
-	model.ParseSlackAttachment(post, []*model.SlackAttachment{attachment})
-	if _, appErr := p.API.CreatePost(post); appErr != nil {
-		return
-	}
+	return attachment
 }
-
 func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
 	var subscribe SubscribeInput
 	if err := json.NewDecoder(body).Decode(&subscribe); err != nil {

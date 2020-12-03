@@ -61,3 +61,12 @@ type SNSMessageNotification struct {
 		EvaluateLowSampleCountPercentile string  `json:"EvaluateLowSampleCountPercentile"`
 	} `json:"Trigger"`
 }
+
+type SNSRdsEventNotification struct {
+	EventSource    string `json:"Event Source"`
+	EventTime      string `json:"Event Time"`
+	IdentifierLink string `json:"Identifier Link"`
+	SourceID       string `json:"Source ID"`
+	EventID        string `json:"Event ID"`
+	EventMessage   string `json:"Event Message"`
+}

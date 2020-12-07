@@ -33,8 +33,12 @@ type Plugin struct {
 const topicsListPrefix = "topicsInChannel_"
 
 func (p *Plugin) OnActivate() error {
-	configuration := p.getConfiguration()
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteURL == nil || *siteURL == "" {
+		return errors.New("siteURL is not set. Please set a siteURL and restart the plugin")
+	}
 
+	configuration := p.getConfiguration()
 	if err := p.IsValid(configuration); err != nil {
 		return err
 	}

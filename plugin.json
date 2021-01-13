@@ -22,7 +22,7 @@
             "key": "TeamChannel",
             "display_name": "Channel to send notifications to:",
             "type": "text",
-            "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n \n Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel".
+            "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n \n Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel."
         },
         {
             "key": "AllowedUserIds",

@@ -4,37 +4,46 @@
     "description": "Send alert notifications from Amazon AWS CloudWatch to Mattermost channels via AWS SNS.",
     "homepage_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS",
     "support_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/issues",
-    "release_notes_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/releases/tag/v1.1.0",
+    "release_notes_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/releases/tag/v1.2.0",
     "icon_path": "assets/icon.svg",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "min_server_version": "5.2.0",
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",
             "darwin-amd64": "server/dist/plugin-darwin-amd64",
             "windows-amd64": "server/dist/plugin-windows-amd64.exe"
-        }
+        },
+        "executable": ""
     },
     "settings_schema": {
         "header": "This plugin is used to receive alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS.",
         "footer": "",
-        "settings": [{
-            "key": "TeamChannel",
-            "display_name": "Channel to send notifications to:",
-            "type": "text",
-            "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n \n Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel."
-        },
-        {
-            "key": "AllowedUserIds",
-            "display_name": "Authorized User IDs:",
-            "type": "text",
-            "help_text": "List of users authorized to accept AWS SNS subscriptions to a Mattermost channel. Must be a comma-separated list of user IDs.\n \n Tip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID."
-        },
-        {
-            "key": "Token",
-            "display_name": "Token:",
-            "type": "generated",
-            "help_text": "Generated token to validate incoming requests from AWS SNS."
-        }]
+        "settings": [
+            {
+                "key": "TeamChannel",
+                "display_name": "Channel to send notifications to:",
+                "type": "text",
+                "help_text": "The channel to send notifications to, specified in the format `teamname,channelname`. If the specified channel does not exist, the plugin will create the channel for you.\n \n Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel.",
+                "placeholder": "",
+                "default": null
+            },
+            {
+                "key": "AllowedUserIds",
+                "display_name": "Authorized User IDs:",
+                "type": "text",
+                "help_text": "List of users authorized to accept AWS SNS subscriptions to a Mattermost channel. Must be a comma-separated list of user IDs.\n \n Tip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID.",
+                "placeholder": "",
+                "default": null
+            },
+            {
+                "key": "Token",
+                "display_name": "Token:",
+                "type": "generated",
+                "help_text": "Generated token to validate incoming requests from AWS SNS.",
+                "placeholder": "",
+                "default": null
+            }
+        ]
     }
 }

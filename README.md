@@ -30,8 +30,6 @@ Originally developed by [Carlos Tadeu Panato Junior](https://github.com/cpanato/
 
 2. Go to **System Console > Plugins > Management** and select **Enable** to enable the AWS SNS plugin.
 
-**Note:** If you're running Mattermost v5.11 or earlier, you must first go to the [releases page of this GitHub repository](https://github.com/mattermost/mattermost-plugin-aws-SNS/releases), download the latest release, and upload it to your Mattermost instance [following this documentation](https://docs.mattermost.com/administration/plugins.html#plugin-uploads).
-
 ### Step 2: Configure plugin in Amazon AWS
 
 1. Create an [AWS CloudWatch alarm for your instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-createalarm.html).

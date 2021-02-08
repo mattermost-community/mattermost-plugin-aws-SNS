@@ -8,7 +8,7 @@
 **Maintainer:** [@mickmister](https://github.com/mickmister)
 **Co-Maintainer:** [@jfrerich](https://github.com/jfrerich)
 
-Send alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS.
+This plugin is used to send alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS. RDS Event processing is also supported.
 
 Originally developed by [Carlos Tadeu Panato Junior](https://github.com/cpanato/).
 

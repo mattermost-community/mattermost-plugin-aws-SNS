@@ -10,13 +10,16 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
 	"github.com/pkg/errors"
+
+	pluginapi "github.com/mattermost/mattermost-plugin-api"
+	"github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/plugin"
 )
 
 type Plugin struct {
 	plugin.MattermostPlugin
+	client *pluginapi.Client
 
 	// configurationLock synchronizes access to the configuration.
 	configurationLock sync.RWMutex
@@ -33,6 +36,8 @@ type Plugin struct {
 const topicsListPrefix = "topicsInChannel_"
 
 func (p *Plugin) OnActivate() error {
+	p.client = pluginapi.NewClient(p.API, p.Driver)
+
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 	if siteURL == nil || *siteURL == "" {
 		return errors.New("siteURL is not set. Please set a siteURL and restart the plugin")
@@ -57,12 +62,12 @@ func (p *Plugin) OnActivate() error {
 	}
 	p.TeamID = team.Id
 
-	botID, err := p.Helpers.EnsureBot(&model.Bot{
+	botID, err := p.client.Bot.EnsureBot(&model.Bot{
 		Username:    "aws-sns",
 		DisplayName: "AWS SNS Plugin",
 		Description: "A bot account created by the plugin AWS SNS",
 	},
-		plugin.ProfileImagePath("assets/icon.png"),
+		pluginapi.ProfileImagePath("assets/icon.png"),
 	)
 	if err != nil {
 		return errors.Wrap(err, "can't ensure bot")
@@ -74,7 +79,7 @@ func (p *Plugin) OnActivate() error {
 		channelToCreate := &model.Channel{
 			Name:        channelSplit,
 			DisplayName: channelSplit,
-			Type:        model.CHANNEL_OPEN,
+			Type:        model.ChannelTypeOpen,
 			TeamId:      p.TeamID,
 			CreatorId:   p.BotUserID,
 		}
@@ -280,7 +285,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 	siteURLPort := *config.ServiceSettings.SiteURL
 	action1 := &model.PostAction{
 		Name: "Confirm Subscription",
-		Type: model.POST_ACTION_TYPE_BUTTON,
+		Type: model.PostActionTypeButton,
 		Integration: &model.PostActionIntegration{
 			Context: map[string]interface{}{
 				"action":           "confirm",

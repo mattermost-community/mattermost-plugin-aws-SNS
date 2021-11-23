@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/plugin"
 	"github.com/pkg/errors"
 
 	"github.com/mattermost/mattermost-plugin-api/experimental/command"
@@ -49,7 +49,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	if cmd != awsSNSCmd {
 		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			ResponseType: model.CommandResponseTypeEphemeral,
 			Text:         fmt.Sprintf("Unknown Command: " + cmd),
 		}, nil
 	}
@@ -59,7 +59,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return p.listTopicsToChannel(), nil
 	default:
 		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			ResponseType: model.CommandResponseTypeEphemeral,
 			Text:         fmt.Sprintf("Unknown Action: " + action),
 		}, nil
 	}
@@ -72,13 +72,13 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 	if err != nil {
 		p.API.LogError("Failed to Get from KV Store")
 		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			ResponseType: model.CommandResponseTypeEphemeral,
 			Text:         err.Error(),
 		}
 	}
 	if val == nil {
 		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			ResponseType: model.CommandResponseTypeEphemeral,
 			Text:         "No Topics are subscribed by the configured channel",
 		}
 	}
@@ -86,7 +86,7 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 	if unMarshalErr != nil {
 		p.API.LogError("Failed to Unmarshal")
 		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			ResponseType: model.CommandResponseTypeEphemeral,
 			Text:         unMarshalErr.Error(),
 		}
 	}
@@ -95,7 +95,7 @@ func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
 		resp = resp + "* " + topicName + "\n"
 	}
 	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_IN_CHANNEL,
+		ResponseType: model.CommandResponseTypeInChannel,
 		Text:         resp,
 	}
 }

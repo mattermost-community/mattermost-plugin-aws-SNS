@@ -24,7 +24,8 @@ Originally developed by [Carlos Tadeu Panato Junior](https://github.com/cpanato/
       - Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel.
 
   2. Set authorized users who can accept AWS SNS subscriptions. Must be a comma-separated list of user IDs.
-      - Tip: Use the [mattermost user search](https://mattermost.com/pl/cli-mattermost-user-search) CLI command to determine a user ID.
+      - Note: This is the database ID of the user, not the username.
+      - Tip: Use the [mmctl user search](https://docs.mattermost.com/manage/mmctl-command-line-tool.html#mmctl-user-list) CLI tool to determine a user ID. The User ID can also be found in the list of Users in the System Console by searching for the user you wish you add.
   3. Set the username that this integration is attached to.
   4. Generate a token used for an AWS SNS subscription. Copy this value as you will use it in a later step.
 

@@ -66,12 +66,10 @@ func (p *Plugin) OnActivate() error {
 	if err != nil {
 		return errors.New("teamChannel setting doesn't follow the pattern $TEAM_NAME,$CHANNEL_NAME")
 	}
-	p.API.LogInfo("channels", "tc", teamChannels)
 
-	appErr := p.resolveAndSetTeamIDs(teamChannels)
-	p.API.LogInfo("channels with team id", "channels", teamChannels)
-	if appErr != nil {
-		return appErr
+	teamChannels, err = p.resolveAndSetTeamIDs(teamChannels)
+	if err != nil {
+		return err
 	}
 
 	botID, err := p.client.Bot.EnsureBot(&model.Bot{
@@ -86,10 +84,8 @@ func (p *Plugin) OnActivate() error {
 	}
 	p.BotUserID = botID
 
-	p.API.LogInfo("bot user", "id", p.BotUserID)
-
-	// get or create channel and return mattermost channel id
-	err = p.getOrCreateMattermostChannels(teamChannels)
+	// get or create channel if it does not exist yet and add mattermost channel id to each teamChannel
+	teamChannels, err = p.getOrCreateMattermostChannels(teamChannels)
 	if err != nil {
 		return err
 	}
@@ -104,26 +100,17 @@ func (p *Plugin) OnActivate() error {
 	return nil
 }
 
-func (p *Plugin) resolveAndSetTeamIDs(channels []*TeamChannel) error {
+func (p *Plugin) resolveAndSetTeamIDs(channels []*TeamChannel) ([]*TeamChannel, error) {
 	//mattermostChannels := []TeamChannel{}
 	for _, teamChannel := range channels {
 		p.API.LogInfo("resolve for teamchannel", "tc", teamChannel)
-		appErr := p.resolveAndSetTeamID(teamChannel)
+		team, appErr := p.API.GetTeamByName(teamChannel.TeamName)
 		if appErr != nil {
-			return appErr
+			return nil, appErr
 		}
-		//mattermostChannels = append(mattermostChannels, *teamChannel)
+		teamChannel.TeamID = team.Id
 	}
-	return nil
-}
-
-func (p *Plugin) resolveAndSetTeamID(teamChannel *TeamChannel) error {
-	team, appErr := p.API.GetTeamByName(teamChannel.TeamName)
-	if appErr != nil {
-		return appErr
-	}
-	teamChannel.TeamID = team.Id
-	return nil
+	return channels, nil
 }
 
 func parseTeamChannelsNames(teamChannel string) ([]*TeamChannel, error) {
@@ -146,10 +133,8 @@ func parseTeamChannelsNames(teamChannel string) ([]*TeamChannel, error) {
 }
 
 func (p *Plugin) getOrCreateChannel(teamChannel *TeamChannel) (string, error) {
-	p.API.LogInfo("get channel", "tc", teamChannel)
 	channel, appErr := p.API.GetChannelByName(teamChannel.TeamID, teamChannel.ChannelName, false)
 	if appErr != nil && appErr.StatusCode == http.StatusNotFound {
-		p.API.LogInfo("Channel not found")
 		channelToCreate := &model.Channel{
 			Name:        teamChannel.ChannelName,
 			DisplayName: teamChannel.ChannelName,
@@ -168,20 +153,18 @@ func (p *Plugin) getOrCreateChannel(teamChannel *TeamChannel) (string, error) {
 		p.API.LogWarn("apperr", "error", appErr)
 		return "", appErr
 	} else {
-		p.API.LogInfo("Channel already exists", "channel id", channel.Id)
 		return channel.Id, nil
 	}
 }
-func (p *Plugin) getOrCreateMattermostChannels(teamChannels []*TeamChannel) error {
+func (p *Plugin) getOrCreateMattermostChannels(teamChannels []*TeamChannel) ([]*TeamChannel, error) {
 	for _, teamChannel := range teamChannels {
 		channelID, err := p.getOrCreateChannel(teamChannel)
-		p.API.LogInfo("resolved to channel", "id", channelID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		teamChannel.ChannelID = channelID
 	}
-	return nil
+	return teamChannels, nil
 }
 
 func (p *Plugin) IsValid(configuration *configuration) error {
@@ -206,7 +189,7 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	channel, err := p.checkChannel(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		p.API.LogError("AWSSNS CHANNEL INVALID")
+		p.API.LogError("Channel is invalid", "error", err.Error())
 		return
 	}
 
@@ -244,12 +227,11 @@ func (p *Plugin) checkChannel(r *http.Request) (*TeamChannel, error) {
 	}
 
 	for _, tc := range p.Channels {
-		p.API.LogDebug("Validate channel", "channel", fmt.Sprintf("%s,%s", tc.TeamName, tc.ChannelName), "compare", strings.Compare(teamChannel, tc.String()))
 		if strings.Compare(teamChannel, tc.NameString()) == 0 {
 			return tc, nil
 		}
 	}
-	return nil, fmt.Errorf("invalid channel")
+	return nil, fmt.Errorf("invalid channel %s", teamChannel)
 }
 
 func (p *Plugin) handleSubscriptionConfirmation(body io.Reader, channel *TeamChannel) {

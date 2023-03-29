@@ -79,11 +79,6 @@ func TestParseTeamChannelsNames(t *testing.T) {
 }
 
 func TestOnActivate(t *testing.T) {
-	//teamID := model.NewId()
-	//channelID := model.NewId()
-
-	demoUserID := model.NewId()
-
 	for name, test := range map[string]struct {
 		SetupAPI         func(*plugintest.API) *plugintest.API
 		TeamChannel      string
@@ -171,7 +166,7 @@ func TestOnActivate(t *testing.T) {
 			p := Plugin{}
 			p.setConfiguration(&configuration{
 				TeamChannel:    test.TeamChannel,
-				AllowedUserIds: demoUserID,
+				AllowedUserIds: model.NewId(),
 				Token:          model.NewId(),
 			})
 			p.SetAPI(api)

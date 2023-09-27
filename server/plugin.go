@@ -28,12 +28,25 @@ type Plugin struct {
 	// setConfiguration for usage.
 	configuration *configuration
 
-	TeamID    string
-	ChannelID string
 	BotUserID string
+	Channels  []*TeamChannel
+}
+
+type TeamChannel struct {
+	TeamID      string
+	TeamName    string
+	ChannelID   string
+	ChannelName string
 }
 
 const topicsListPrefix = "topicsInChannel_"
+
+func (t *TeamChannel) String() string {
+	return fmt.Sprintf("TeamId: %s, TeamName: %s - ChannelId: %s, ChannelName: %s", t.TeamID, t.TeamName, t.ChannelID, t.ChannelName)
+}
+func (t *TeamChannel) NameString() string {
+	return fmt.Sprintf("%s,%s", t.TeamName, t.ChannelName)
+}
 
 func (p *Plugin) OnActivate() error {
 	p.client = pluginapi.NewClient(p.API, p.Driver)
@@ -48,19 +61,16 @@ func (p *Plugin) OnActivate() error {
 		return err
 	}
 
-	split := strings.Split(p.configuration.TeamChannel, ",")
-	if len(split) != 2 {
+	teamChannels, err := parseTeamChannelsNames(p.configuration.TeamChannel)
+
+	if err != nil {
 		return errors.New("teamChannel setting doesn't follow the pattern $TEAM_NAME,$CHANNEL_NAME")
 	}
 
-	teamSplit := split[0]
-	channelSplit := split[1]
-
-	team, appErr := p.API.GetTeamByName(teamSplit)
-	if appErr != nil {
-		return appErr
+	teamChannels, err = p.resolveAndSetTeamIDs(teamChannels)
+	if err != nil {
+		return err
 	}
-	p.TeamID = team.Id
 
 	botID, err := p.client.Bot.EnsureBot(&model.Bot{
 		Username:    "aws-sns",
@@ -74,27 +84,15 @@ func (p *Plugin) OnActivate() error {
 	}
 	p.BotUserID = botID
 
-	channel, appErr := p.API.GetChannelByName(team.Id, channelSplit, false)
-	if appErr != nil && appErr.StatusCode == http.StatusNotFound {
-		channelToCreate := &model.Channel{
-			Name:        channelSplit,
-			DisplayName: channelSplit,
-			Type:        model.ChannelTypeOpen,
-			TeamId:      p.TeamID,
-			CreatorId:   p.BotUserID,
-		}
-
-		newChannel, errChannel := p.API.CreateChannel(channelToCreate)
-		if errChannel != nil {
-			return errChannel
-		}
-		p.ChannelID = newChannel.Id
-	} else if err != nil {
+	// get or create channel if it does not exist yet and add mattermost channel id to each teamChannel
+	teamChannels, err = p.getOrCreateMattermostChannels(teamChannels)
+	if err != nil {
 		return err
-	} else {
-		p.ChannelID = channel.Id
 	}
 
+	p.Channels = teamChannels
+
+	p.API.LogInfo("channels resvolved", "tc", teamChannels)
 	if err := p.registerCommands(); err != nil {
 		return err
 	}
@@ -102,9 +100,76 @@ func (p *Plugin) OnActivate() error {
 	return nil
 }
 
+func (p *Plugin) resolveAndSetTeamIDs(channels []*TeamChannel) ([]*TeamChannel, error) {
+	//mattermostChannels := []TeamChannel{}
+	for _, teamChannel := range channels {
+		p.API.LogInfo("resolve for teamchannel", "tc", teamChannel)
+		team, appErr := p.API.GetTeamByName(teamChannel.TeamName)
+		if appErr != nil {
+			return nil, appErr
+		}
+		teamChannel.TeamID = team.Id
+	}
+	return channels, nil
+}
+
+func parseTeamChannelsNames(teamChannel string) ([]*TeamChannel, error) {
+	channels := []*TeamChannel{}
+	splitChannels := strings.Split(teamChannel, ";")
+	for _, splitChannel := range splitChannels {
+		if len(splitChannel) < 1 {
+			continue
+		}
+		split := strings.Split(splitChannel, ",")
+		if len(split) != 2 {
+			return nil, errors.New("teamChannel setting doesn't follow the pattern $TEAM_NAME,$CHANNEL_NAME")
+		}
+		channels = append(channels, &TeamChannel{
+			TeamName:    split[0],
+			ChannelName: split[1],
+		})
+	}
+	return channels, nil
+}
+
+func (p *Plugin) getOrCreateChannel(teamChannel *TeamChannel) (string, error) {
+	channel, appErr := p.API.GetChannelByName(teamChannel.TeamID, teamChannel.ChannelName, false)
+	if appErr != nil && appErr.StatusCode == http.StatusNotFound {
+		channelToCreate := &model.Channel{
+			Name:        teamChannel.ChannelName,
+			DisplayName: teamChannel.ChannelName,
+			Type:        model.ChannelTypeOpen,
+			TeamId:      teamChannel.TeamID,
+			CreatorId:   p.BotUserID,
+		}
+
+		p.API.LogInfo("Creating Channel", "name", teamChannel.ChannelName)
+		newChannel, errChannel := p.API.CreateChannel(channelToCreate)
+		if errChannel != nil {
+			return "", errChannel
+		}
+		return newChannel.Id, nil
+	} else if appErr != nil {
+		p.API.LogWarn("apperr", "error", appErr)
+		return "", appErr
+	} else {
+		return channel.Id, nil
+	}
+}
+func (p *Plugin) getOrCreateMattermostChannels(teamChannels []*TeamChannel) ([]*TeamChannel, error) {
+	for _, teamChannel := range teamChannels {
+		channelID, err := p.getOrCreateChannel(teamChannel)
+		if err != nil {
+			return nil, err
+		}
+		teamChannel.ChannelID = channelID
+	}
+	return teamChannels, nil
+}
+
 func (p *Plugin) IsValid(configuration *configuration) error {
 	if configuration.TeamChannel == "" {
-		return fmt.Errorf("must set a Team and a Channel")
+		return fmt.Errorf("must set a Team and a TeamChannel")
 	}
 
 	if configuration.AllowedUserIds == "" {
@@ -120,19 +185,26 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		p.API.LogError("AWSSNS TOKEN INVALID")
 		return
 	}
+
+	channel, err := p.checkChannel(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		p.API.LogError("Channel is invalid", "error", err.Error())
+		return
+	}
+
 	snsMessageType := r.Header.Get("x-amz-sns-message-type")
 	if snsMessageType == "" {
 		p.handleAction(w, r)
 	} else {
 		switch snsMessageType {
 		case "SubscriptionConfirmation":
-			p.handleSubscriptionConfirmation(r.Body)
+			p.handleSubscriptionConfirmation(r.Body, channel)
 		case "Notification":
 			p.API.LogDebug("AWSSNS HandleNotification")
-			p.handleNotification(r.Body)
-
+			p.handleNotification(r.Body, channel)
 		case "UnsubscribeConfirmation":
-			p.handleUnsubscribeConfirmation(r.Body)
+			p.handleUnsubscribeConfirmation(r.Body, channel)
 		default:
 			break
 		}
@@ -146,16 +218,32 @@ func (p *Plugin) checkToken(r *http.Request) error {
 	return nil
 }
 
-func (p *Plugin) handleSubscriptionConfirmation(body io.Reader) {
+func (p *Plugin) checkChannel(r *http.Request) (*TeamChannel, error) {
+	teamChannel := r.URL.Query().Get("channel")
+
+	// fallback for old url configuration without channel parameter, use first channel as default
+	if len(teamChannel) == 0 {
+		return p.Channels[0], nil
+	}
+
+	for _, tc := range p.Channels {
+		if strings.Compare(teamChannel, tc.NameString()) == 0 {
+			return tc, nil
+		}
+	}
+	return nil, fmt.Errorf("invalid channel %s", teamChannel)
+}
+
+func (p *Plugin) handleSubscriptionConfirmation(body io.Reader, channel *TeamChannel) {
 	var subscribe SubscribeInput
 	if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
 		return
 	}
 
-	p.sendSubscribeConfirmationMessage(subscribe.Message, subscribe.SubscribeURL)
+	p.sendSubscribeConfirmationMessage(subscribe.Message, subscribe.SubscribeURL, channel)
 }
 
-func (p *Plugin) handleNotification(body io.Reader) {
+func (p *Plugin) handleNotification(body io.Reader, channel *TeamChannel) {
 	var notification SNSNotification
 	if err := json.NewDecoder(body).Decode(&notification); err != nil {
 		p.API.LogDebug("AWSSNS HandleNotification Decode Error", "err=", err.Error())
@@ -164,20 +252,20 @@ func (p *Plugin) handleNotification(body io.Reader) {
 
 	if isRdsEvent, messageNotification := p.isRDSEvent(notification.Message); isRdsEvent {
 		p.API.LogDebug("Processing RDS Event")
-		p.sendPostNotification(p.createSNSRdsEventAttachment(notification.Subject, messageNotification))
+		p.sendPostNotification(p.createSNSRdsEventAttachment(notification.Subject, messageNotification), channel)
 		return
 	}
 
 	if isAlarm, messageNotification := p.isCloudWatchAlarm(notification.Message); isAlarm {
 		p.API.LogDebug("Processing CloudWatch alarm")
-		p.sendPostNotification(p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification))
+		p.sendPostNotification(p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification), channel)
 		return
 	}
 }
 
-func (p *Plugin) sendPostNotification(attachment model.SlackAttachment) {
+func (p *Plugin) sendPostNotification(attachment model.SlackAttachment, channel *TeamChannel) {
 	post := &model.Post{
-		ChannelId: p.ChannelID,
+		ChannelId: channel.ChannelID,
 		UserId:    p.BotUserID,
 	}
 	model.ParseSlackAttachment(post, []*model.SlackAttachment{&attachment})
@@ -269,18 +357,18 @@ func (p *Plugin) createSNSMessageNotificationAttachment(subject string, messageN
 
 	return attachment
 }
-func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader) {
+func (p *Plugin) handleUnsubscribeConfirmation(body io.Reader, channel *TeamChannel) {
 	var subscribe SubscribeInput
 	if err := json.NewDecoder(body).Decode(&subscribe); err != nil {
 		return
 	}
 	topic := strings.Split(subscribe.TopicArn, ":")[5]
-	if err := p.deleteFromKVStore(topic); err != nil {
+	if err := p.deleteFromKVStore(topic, channel.ChannelID); err != nil {
 		p.API.LogError("Unable to delete %s from KV Store", topic)
 	}
 }
 
-func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionURL string) {
+func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionURL string, channel *TeamChannel) {
 	config := p.API.GetConfig()
 	siteURLPort := *config.ServiceSettings.SiteURL
 	action1 := &model.PostAction{
@@ -291,7 +379,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 				"action":           "confirm",
 				"subscription_url": subscriptionURL,
 			},
-			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v", siteURLPort, manifest.ID, p.configuration.Token),
+			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v&channel=%s", siteURLPort, manifest.ID, p.configuration.Token, channel.NameString()),
 		},
 	}
 
@@ -307,7 +395,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 
 	spinPost := &model.Post{
 		Message:   "",
-		ChannelId: p.ChannelID,
+		ChannelId: channel.ChannelID,
 		UserId:    p.BotUserID,
 		Props: model.StringInterface{
 			"attachments": attachments,
@@ -394,7 +482,7 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 			}
 			topic := strings.Split(query.Get("TopicArn"), ":")[5]
 			// Store this topic in KV Store
-			if err = p.updateKVStore(topic); err != nil {
+			if err = p.updateKVStore(topic, actionPost.ChannelId); err != nil {
 				p.API.LogError("Unable to store AWS SNS Topic in KV Store")
 			}
 			return
@@ -405,9 +493,9 @@ func (p *Plugin) handleAction(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (p *Plugin) updateKVStore(topicName string) error {
+func (p *Plugin) updateKVStore(topicName string, channelID string) error {
 	var topics = SNSTopics{}
-	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
+	val, err := p.API.KVGet(topicsListPrefix + channelID)
 	if err != nil {
 		p.API.LogError("Unable to Get from KV Store")
 		return err
@@ -429,12 +517,12 @@ func (p *Plugin) updateKVStore(topicName string) error {
 		p.API.LogError("Unable to marshal Topics struct to JSON")
 		return marshalErr
 	}
-	p.API.KVSet(topicsListPrefix+p.ChannelID, b)
+	p.API.KVSet(topicsListPrefix+channelID, b)
 	return nil
 }
 
-func (p *Plugin) deleteFromKVStore(topicName string) error {
-	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
+func (p *Plugin) deleteFromKVStore(topicName string, channelID string) error {
+	val, err := p.API.KVGet(topicsListPrefix + channelID)
 	if err != nil {
 		p.API.LogError("Unable to Get from KV Store")
 		return err
@@ -454,7 +542,7 @@ func (p *Plugin) deleteFromKVStore(topicName string) error {
 		p.API.LogError("Unable to Marshal the Topics struct")
 		return err
 	}
-	p.API.KVSet(topicsListPrefix+p.ChannelID, b)
+	p.API.KVSet(topicsListPrefix+channelID, b)
 	return nil
 }
 

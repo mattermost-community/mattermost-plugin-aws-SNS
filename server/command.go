@@ -56,7 +56,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	switch action {
 	case "list-topics":
-		return p.listTopicsToChannel(), nil
+		return p.listTopicsToChannel(args.ChannelId), nil
 	default:
 		return &model.CommandResponse{
 			ResponseType: model.CommandResponseTypeEphemeral,
@@ -66,9 +66,9 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 }
 
 // listTopicsToChannel Lists topics subscribed to the channel
-func (p *Plugin) listTopicsToChannel() *model.CommandResponse {
+func (p *Plugin) listTopicsToChannel(channelID string) *model.CommandResponse {
 	var topics SNSTopics
-	val, err := p.API.KVGet(topicsListPrefix + p.ChannelID)
+	val, err := p.API.KVGet(topicsListPrefix + channelID)
 	if err != nil {
 		p.API.LogError("Failed to Get from KV Store")
 		return &model.CommandResponse{

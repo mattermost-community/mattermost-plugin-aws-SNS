@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	pluginapi "github.com/mattermost/mattermost-plugin-api"
-	"github.com/mattermost/mattermost-server/v6/model"
-	"github.com/mattermost/mattermost-server/v6/plugin/plugintest"
-	"github.com/mattermost/mattermost-server/v6/plugin/plugintest/mock"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest/mock"
+	"github.com/mattermost/mattermost/server/public/pluginapi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -108,12 +108,17 @@ func TestOnActivate(t *testing.T) {
 
 				// Mock client ensure bot call
 				api.On("GetServerVersion").Return("7.1.0")
-				api.On("KVGet", "mmi_botid").Return([]byte(botUserID), nil)
-				api.On("PatchBot", botUserID, mock.AnythingOfType("*model.BotPatch")).Return(nil, nil)
+				api.On("KVSetWithOptions", "mutex_mmi_bot_ensure", mock.AnythingOfType("[]uint8"), model.PluginKVSetOptions{Atomic: true, OldValue: []uint8(nil), ExpireInSeconds: 15}).Return(true, nil)
+				api.On("KVSetWithOptions", "mutex_mmi_bot_ensure", []byte(nil), model.PluginKVSetOptions{ExpireInSeconds: 0}).Return(true, nil)
 				path, err := filepath.Abs("..")
 				require.Nil(t, err)
 				api.On("GetBundlePath").Return(path, nil)
 				api.On("SetProfileImage", botUserID, mock.Anything).Return(nil)
+				api.On("EnsureBotUser", &model.Bot{
+					Username:    "aws-sns",
+					DisplayName: "AWS SNS Plugin",
+					Description: "A bot account created by the plugin AWS SNS",
+				}).Return(botUserID, nil)
 
 				api.On("RegisterCommand", mock.AnythingOfType("*model.Command")).Return(nil)
 
@@ -141,12 +146,17 @@ func TestOnActivate(t *testing.T) {
 
 				// Mock client ensure bot call
 				api.On("GetServerVersion").Return("7.1.0")
-				api.On("KVGet", "mmi_botid").Return([]byte(botUserID), nil)
-				api.On("PatchBot", botUserID, mock.AnythingOfType("*model.BotPatch")).Return(nil, nil)
+				api.On("KVSetWithOptions", "mutex_mmi_bot_ensure", mock.AnythingOfType("[]uint8"), model.PluginKVSetOptions{Atomic: true, OldValue: []uint8(nil), ExpireInSeconds: 15}).Return(true, nil)
+				api.On("KVSetWithOptions", "mutex_mmi_bot_ensure", []byte(nil), model.PluginKVSetOptions{ExpireInSeconds: 0}).Return(true, nil)
 				path, err := filepath.Abs("..")
 				require.Nil(t, err)
 				api.On("GetBundlePath").Return(path, nil)
 				api.On("SetProfileImage", botUserID, mock.Anything).Return(nil)
+				api.On("EnsureBotUser", &model.Bot{
+					Username:    "aws-sns",
+					DisplayName: "AWS SNS Plugin",
+					Description: "A bot account created by the plugin AWS SNS",
+				}).Return(botUserID, nil)
 
 				api.On("RegisterCommand", mock.AnythingOfType("*model.Command")).Return(nil)
 

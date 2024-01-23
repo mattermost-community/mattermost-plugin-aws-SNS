@@ -4,9 +4,7 @@
     "description": "Send alert notifications from Amazon AWS CloudWatch to Mattermost channels via AWS SNS.",
     "homepage_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS",
     "support_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/issues",
-    "release_notes_url": "https://github.com/mattermost/mattermost-plugin-aws-SNS/releases/tag/v1.2.0",
     "icon_path": "assets/icon.svg",
-    "version": "1.2.0",
     "min_server_version": "5.37.0",
     "server": {
         "executables": {
@@ -26,7 +24,7 @@
                 "key": "TeamChannel",
                 "display_name": "Channels to send notifications to:",
                 "type": "text",
-                "help_text": "The channels to send notifications to. Multiple channels can be specified. Format `teamname,channelname;teamname-2,channelname-2`. If the specified channels do not exist, the plugin will create the channels for you.\n \n Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to `myteam,mychannel`: https://example.com/myteam/channels/mychannel.",
+                "help_text": "The channels to send notifications to. Multiple channels can be specified. Format 'teamname,channelname;teamname-2,channelname-2'. If the specified channels do not exist, the plugin will create the channels for you.\n \n Note: Must be the team and channel handle used in the URL. For example, in the following URL, set the value to 'myteam,mychannel': https://example.com/myteam/channels/mychannel.",
                 "placeholder": "",
                 "default": null
             },

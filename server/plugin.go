@@ -435,7 +435,7 @@ func (p *Plugin) sendSubscribeConfirmationMessage(message string, subscriptionUR
 				"action":           "confirm",
 				"subscription_url": subscriptionURL,
 			},
-			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v&channel=%s", siteURLPort, manifest.ID, p.configuration.Token, channel.NameString()),
+			URL: fmt.Sprintf("%v/plugins/%v/confirm?token=%v&channel=%s", siteURLPort, manifest.Id, p.configuration.Token, channel.NameString()),
 		},
 	}
 

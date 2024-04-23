@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -262,6 +263,12 @@ func (p *Plugin) handleNotification(body io.Reader, channel *TeamChannel) {
 		return
 	}
 
+	if isCodeBuild, messageNotification := p.isCodeBuildEvent(notification.Message); isCodeBuild {
+		p.API.LogDebug("Processing CodeBuild Event")
+		p.sendPostNotification(p.createSNSCodeBuildEventNotificationAttachment(notification.Subject, messageNotification), channel)
+		return
+	}
+
 	if isAlarm, messageNotification := p.isCloudWatchAlarm(notification.Message); isAlarm {
 		p.API.LogDebug("Processing CloudWatch alarm")
 		p.sendPostNotification(p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification), channel)
@@ -332,6 +339,21 @@ func (p *Plugin) isCloudformationEvent(message string) (bool, SNSCloudformationE
 	return false, messageNotification
 }
 
+func (p *Plugin) isCodeBuildEvent(message string) (bool, SNSCodeBuildEventNotification) {
+	p.API.LogInfo("AWSSNS HandleNotification Info on CodeBuild event notification", "message", message)
+
+	var messageNotification SNSCodeBuildEventNotification
+	if err := json.Unmarshal([]byte(message), &messageNotification); err != nil {
+		p.API.LogError(
+			"AWSSNS HandleNotification Decode Error on CodeBuild event notification",
+			"err", err.Error(),
+			"message", message)
+		return false, messageNotification
+	}
+
+	return len(messageNotification.Source) > 0 && messageNotification.Source == "aws.codebuild", messageNotification
+}
+
 func (p *Plugin) createSNSRdsEventAttachment(subject string, messageNotification SNSRdsEventNotification) model.SlackAttachment {
 	p.API.LogDebug("AWSSNS HandleNotification RDS Event", "MESSAGE", subject)
 
@@ -363,6 +385,31 @@ func (p *Plugin) createSNSCloudformationEventAttachment(subject string, messageN
 	fields = addFields(fields, "ResourceType", messageNotification.ResourceType, true)
 	fields = addFields(fields, "Timestamp", messageNotification.Timestamp, true)
 	fields = addFields(fields, "ResourceStatus", messageNotification.ResourceStatus, true)
+
+	attachment := model.SlackAttachment{
+		Title:  subject,
+		Fields: fields,
+	}
+
+	return attachment
+}
+
+func (p *Plugin) createSNSCodeBuildEventNotificationAttachment(subject string, messageNotification SNSCodeBuildEventNotification) model.SlackAttachment {
+	var fields []*model.SlackAttachmentField
+
+	fields = addFields(fields, "Type", messageNotification.DetailType, true)
+	fields = addFields(fields, "Project Name", messageNotification.Detail.ProjectName, true)
+	fields = addFields(fields, "Time", messageNotification.Time.Format(time.DateTime), true)
+	fields = addFields(fields, "Build ID", messageNotification.Detail.BuildID, true)
+
+	if len(messageNotification.Detail.BuildStatus) > 0 {
+		fields = addFields(fields, "Build Status", messageNotification.Detail.BuildStatus, true)
+	}
+
+	if len(messageNotification.Detail.CompletedPhase) > 0 {
+		fields = addFields(fields, "Completed Phase", messageNotification.Detail.CompletedPhase, true)
+		fields = addFields(fields, "Completed Phase Context", messageNotification.Detail.CompletedPhaseContext, true)
+	}
 
 	attachment := model.SlackAttachment{
 		Title:  subject,

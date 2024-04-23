@@ -43,6 +43,14 @@
                 "help_text": "Generated token to validate incoming requests from AWS SNS.",
                 "placeholder": "",
                 "default": null
+            },
+            {
+                "key": "EnableUnknownTypeMessages",
+                "display_name": "Enable unknown type notifications support:",
+                "type": "bool",
+                "help_text": "If the AWS SNS plugin does not support a particular type of SNS notifications, it displays those notifications as formatted JSON or plain text.",
+                "placeholder": "",
+                "default": false
             }
         ]
     }

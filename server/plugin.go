@@ -269,7 +269,9 @@ func (p *Plugin) handleNotification(body io.Reader, channel *TeamChannel) {
 		return
 	}
 
-	p.sendPostNotification(p.createSNSUnknownTypeMessage(notification.Subject, notification.Message), channel)
+	if p.configuration.EnableUnknownTypeMessages {
+		p.sendPostNotification(p.createSNSUnknownTypeMessage(notification.Subject, notification.Message), channel)
+	}
 }
 
 func (p *Plugin) sendPostNotification(attachment model.SlackAttachment, channel *TeamChannel) {

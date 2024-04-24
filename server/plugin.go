@@ -402,18 +402,35 @@ func (p *Plugin) createSNSCodeBuildEventNotificationAttachment(subject string, m
 	fields = addFields(fields, "Time", messageNotification.Time.Format(time.DateTime), true)
 	fields = addFields(fields, "Build ID", messageNotification.Detail.BuildID, true)
 
-	if len(messageNotification.Detail.BuildStatus) > 0 {
+	if messageNotification.DetailType == "CodeBuild Build State Change" {
 		fields = addFields(fields, "Build Status", messageNotification.Detail.BuildStatus, true)
 	}
 
-	if len(messageNotification.Detail.CompletedPhase) > 0 {
+	if messageNotification.DetailType == "CodeBuild Build Phase Change" {
+		fields = addFields(fields, "Current Phase", messageNotification.Detail.CurrentPhase, true)
+		fields = addFields(fields, "Current Phase Context", messageNotification.Detail.CurrentPhaseContext, true)
 		fields = addFields(fields, "Completed Phase", messageNotification.Detail.CompletedPhase, true)
 		fields = addFields(fields, "Completed Phase Context", messageNotification.Detail.CompletedPhaseContext, true)
+	}
+
+	var msgColor string
+	if messageNotification.DetailType == "CodeBuild Build State Change" {
+		switch messageNotification.Detail.BuildStatus {
+		case "FAILED", "FAULT", "TIMED_OUT":
+			msgColor = "#FF0000"
+		case "SUCCEEDED":
+			msgColor = "#008000"
+		case "IN_PROGRESS", "QUEUED":
+			msgColor = "#008000"
+		case "STOPPED":
+			msgColor = "#AAAAAA"
+		}
 	}
 
 	attachment := model.SlackAttachment{
 		Title:  subject,
 		Fields: fields,
+		Color:  msgColor,
 	}
 
 	return attachment

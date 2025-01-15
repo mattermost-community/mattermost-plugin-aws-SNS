@@ -9,9 +9,6 @@
 [![Release](https://img.shields.io/github/v/release/mattermost/mattermost-plugin-aws-SNS)](https://github.com/mattermost/mattermost-plugin-aws-SNS/releases/latest)
 [![HW](https://img.shields.io/github/issues/mattermost/mattermost-plugin-aws-SNS/Up%20For%20Grabs?color=dark%20green&label=Help%20Wanted)](https://github.com/mattermost/mattermost-plugin-aws-SNS/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22Up+For+Grabs%22+label%3A%22Help+Wanted%22)
 
-**Maintainer:** [@wiggin77](https://github.com/wiggin77)
-**Co-Maintainer:** [@jfrerich](https://github.com/jfrerich)
-
 This plugin is used to send alert notifications from [Amazon AWS CloudWatch](https://aws.amazon.com/cloudwatch/) to Mattermost channels via AWS SNS. RDS Event processing is also supported.
 
 Originally developed by [Carlos Tadeu Panato Junior](https://github.com/cpanato/).

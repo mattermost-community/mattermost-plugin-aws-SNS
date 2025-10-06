@@ -47,6 +47,9 @@ linters:
 
 issues:
   exclude-rules:
+    - path: plugin.go
+      linters:
+        - goconst
     - path: server/manifest.go
       linters:
         - deadcode

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -267,6 +268,10 @@ func (p *Plugin) handleNotification(body io.Reader, channel *TeamChannel) {
 		p.sendPostNotification(p.createSNSMessageNotificationAttachment(notification.Subject, messageNotification), channel)
 		return
 	}
+
+	if p.configuration.EnableUnknownTypeMessages {
+		p.sendPostNotification(p.createSNSUnknownTypeMessage(notification.Subject, notification.Message), channel)
+	}
 }
 
 func (p *Plugin) sendPostNotification(attachment model.SlackAttachment, channel *TeamChannel) {
@@ -370,6 +375,26 @@ func (p *Plugin) createSNSCloudformationEventAttachment(subject string, messageN
 	}
 
 	return attachment
+}
+
+func (p *Plugin) createSNSUnknownTypeMessage(subject string, message string) model.SlackAttachment {
+	p.API.LogDebug("AWSSNS HandleNotification Unknown Type Message", "SUBJECT", subject)
+
+	text := message
+
+	jsonBytes := []byte(message)
+	prettyJSON := &bytes.Buffer{}
+	err := json.Indent(prettyJSON, jsonBytes, "", "  ")
+	if err == nil {
+		text = "```json\n" + prettyJSON.String() + "\n```"
+	}
+
+	post := model.SlackAttachment{
+		Title: subject,
+		Text:  text,
+	}
+
+	return post
 }
 
 func (p *Plugin) createSNSMessageNotificationAttachment(subject string, messageNotification SNSMessageNotification) model.SlackAttachment {

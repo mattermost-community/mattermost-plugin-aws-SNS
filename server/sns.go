@@ -37,26 +37,26 @@ type SNSNotification struct {
 type SNSMessageNotification struct {
 	AlarmName        string `json:"AlarmName"`
 	AlarmDescription string `json:"AlarmDescription,omitempty"`
-	AWSAccountID     string `json:"AWSAccountId"`
+	AWSAccountID     string `json:"AWSAccountId,omitempty"`
 	NewStateValue    string `json:"NewStateValue"`
 	NewStateReason   string `json:"NewStateReason"`
 	StateChangeTime  string `json:"StateChangeTime"`
-	Region           string `json:"Region"`
+	Region           string `json:"Region,omitempty"`
 	OldStateValue    string `json:"OldStateValue"`
 	Trigger          struct {
 		MetricName    string `json:"MetricName"`
 		Namespace     string `json:"Namespace"`
-		StatisticType string `json:"StatisticType"`
-		Statistic     string `json:"Statistic"`
+		StatisticType string `json:"StatisticType,omitempty"` 
+		Statistic     string `json:"Statistic,omitempty"`     
 		Unit          string `json:"Unit,omitempty"`
 		Dimensions    []struct {
 			Value string `json:"value"`
 			Name  string `json:"name"`
 		} `json:"Dimensions"`
-		Period                           int     `json:"Period"`
-		EvaluationPeriods                int     `json:"EvaluationPeriods"`
-		ComparisonOperator               string  `json:"ComparisonOperator"`
-		Threshold                        float32 `json:"Threshold"`
+		Period                           int     `json:"Period,omitempty"`             
+		EvaluationPeriods                int     `json:"EvaluationPeriods,omitempty"`  
+		ComparisonOperator               string  `json:"ComparisonOperator,omitempty"` 
+		Threshold                        float32 `json:"Threshold,omitempty"`          
 		TreatMissingData                 string  `json:"TreatMissingData"`
 		EvaluateLowSampleCountPercentile string  `json:"EvaluateLowSampleCountPercentile"`
 	} `json:"Trigger"`

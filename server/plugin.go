@@ -377,20 +377,41 @@ func (p *Plugin) createSNSMessageNotificationAttachment(subject string, messageN
 	var fields []*model.SlackAttachmentField
 
 	fields = addFields(fields, "AlarmName", messageNotification.AlarmName, true)
-	fields = addFields(fields, "AlarmDescription", messageNotification.AlarmDescription, true)
-	fields = addFields(fields, "AWS Account", messageNotification.AWSAccountID, true)
-	fields = addFields(fields, "Region", messageNotification.Region, true)
 	fields = addFields(fields, "New State", messageNotification.NewStateValue, true)
 	fields = addFields(fields, "Old State", messageNotification.OldStateValue, true)
 	fields = addFields(fields, "New State Reason", messageNotification.NewStateReason, false)
 	fields = addFields(fields, "MetricName", messageNotification.Trigger.MetricName, true)
 	fields = addFields(fields, "Namespace", messageNotification.Trigger.Namespace, true)
-	fields = addFields(fields, "StatisticType", messageNotification.Trigger.StatisticType, true)
-	fields = addFields(fields, "Statistic", messageNotification.Trigger.Statistic, true)
-	fields = addFields(fields, "Period", strconv.Itoa(messageNotification.Trigger.Period), true)
-	fields = addFields(fields, "EvaluationPeriods", strconv.Itoa(messageNotification.Trigger.EvaluationPeriods), true)
-	fields = addFields(fields, "ComparisonOperator", messageNotification.Trigger.ComparisonOperator, true)
-	fields = addFields(fields, "Threshold", fmt.Sprintf("%f", messageNotification.Trigger.Threshold), true)
+
+	// Conditional fields
+	if messageNotification.AWSAccountID != "" {
+		fields = addFields(fields, "AWS Account", messageNotification.AWSAccountID, true)
+	}
+	if messageNotification.AlarmDescription != "" {
+		fields = addFields(fields, "AWS Account", messageNotification.AlarmDescription, true)
+	}
+	if messageNotification.Region != "" {
+		fields = addFields(fields, "Region", messageNotification.Region, true)
+	}
+	if messageNotification.Trigger.StatisticType != "" {
+		fields = addFields(fields, "StatisticType", messageNotification.Trigger.StatisticType, true)
+	}
+	if messageNotification.Trigger.Statistic != "" {
+		fields = addFields(fields, "Statistic", messageNotification.Trigger.Statistic, true)
+	}
+	if messageNotification.Trigger.Period != 0 {
+		fields = addFields(fields, "Period", strconv.Itoa(messageNotification.Trigger.Period), true)
+	}
+	if messageNotification.Trigger.EvaluationPeriods != 0 {
+		fields = addFields(fields, "EvaluationPeriods", strconv.Itoa(messageNotification.Trigger.EvaluationPeriods), true)
+	}
+	if messageNotification.Trigger.ComparisonOperator != "" {
+		fields = addFields(fields, "ComparisonOperator", messageNotification.Trigger.ComparisonOperator, true)
+	}
+	// Threshold check (using 0 as the "empty" check for float32)
+	if messageNotification.Trigger.Threshold != 0 {
+		fields = addFields(fields, "Threshold", fmt.Sprintf("%f", messageNotification.Trigger.Threshold), true)
+	}
 
 	var dimensions []string
 	for _, dimension := range messageNotification.Trigger.Dimensions {
